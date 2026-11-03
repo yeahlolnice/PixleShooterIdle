@@ -8,12 +8,13 @@ extends Node
 @export var mount_path: NodePath = ^"../Head/Camera3D/WeaponMount"
 
 var weapon: Weapon
-var _menu_open := false
+## Ids of menus currently open; firing is blocked while any is open.
+var _open_menus: Dictionary = {}
 var _can_shoot := true
 
 
 func _ready() -> void:
-	EventBus.menu_toggled.connect(func(_id, open): _menu_open = open)
+	EventBus.menu_toggled.connect(_on_menu_toggled)
 	EventBus.round_state_changed.connect(func(state, _info): _can_shoot = state == EventBus.ROUND_LIVE)
 	EventBus.player_died.connect(func(_info): equip_starter())
 	equip(GameState.equipped_gun_id)
@@ -35,12 +36,24 @@ func equip(gun_id: String) -> String:
 	return def["id"]
 
 
+func _on_menu_toggled(menu_id: StringName, open: bool) -> void:
+	if open:
+		_open_menus[menu_id] = true
+	else:
+		_open_menus.erase(menu_id)
+
+
+## True while at least one menu is open (fire/reload input is ignored).
+func is_menu_open() -> bool:
+	return not _open_menus.is_empty()
+
+
 func equip_starter() -> String:
 	return equip(DataRegistry.starter_gun_id())
 
 
 func _physics_process(_delta: float) -> void:
-	if weapon == null or _menu_open or not _can_shoot:
+	if weapon == null or not _open_menus.is_empty() or not _can_shoot:
 		return
 	var fire := Input.is_action_pressed("fire") if weapon.is_auto() else Input.is_action_just_pressed("fire")
 	if fire:
