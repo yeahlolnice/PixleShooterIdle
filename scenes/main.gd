@@ -47,6 +47,7 @@ func _ready() -> void:
 	var buy_menu: BuyMenu = load("res://ui/buy_menu/buy_menu.tscn").instantiate()
 	buy_menu.weapon_manager = player.get_node_or_null("WeaponManager")
 	ui_layer.add_child(buy_menu)
+	ui_layer.add_child(load("res://ui/mod_menu/mod_menu.tscn").instantiate())
 	rounds.start(id)
 
 
