@@ -87,3 +87,11 @@ any other file must exist here (checked at load).
 ## Coming in later tickets
 `cheats.json` (TASK-009: 12 cheats + Server Slots, tab, unlock rule, base cost, per-level curves),
 `chat.json` (TASK-013: triggers, channel, once flag, delay, lines with `{placeholders}`).
+
+## Bot hit chance (TASK-003)
+
+Bots fire hitscan shots with direction uniform inside a cone of `aim_error_deg` (grunt 14 deg x arena `aim_error`).
+Hit probability on a 0.4 m-radius player is `(r / (d * tan(err)))^2` (see `Bot.hit_probability`):
+about 2.6% at 10 m and 10% at 5 m on arena_1 (unit-tested bounds: <10% at 10 m, <30% at 5 m).
+With fire_rate 0.7/s and damage 5 that is roughly 0.1 damage/s at mid range.
+Head hits use the shooting gun's `headshot_mult`; body hits are 1x.
