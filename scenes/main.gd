@@ -9,6 +9,10 @@ extends Node3D
 @onready var arena: Node3D = $Arena
 @onready var player: CharacterBody3D = $Player
 @onready var world_env: WorldEnvironment = $WorldEnvironment
+@onready var ui_layer: CanvasLayer = $UI
+
+var tracker: MatchTracker
+var rounds: RoundController
 
 
 func _ready() -> void:
@@ -21,4 +25,21 @@ func _ready() -> void:
 	if not arena.player_spawns.is_empty():
 		player.global_position = arena.player_spawns[0]
 	print("[Main] arena '%s' built: %d blocks, %d bot spawns" % [id, arena.block_count(), arena.bot_spawns.size()])
+	EventBus.player_spawned.emit(player)
+
+	tracker = MatchTracker.new()
+	tracker.name = "MatchTracker"
+	add_child(tracker)
+	rounds = RoundController.new()
+	rounds.name = "RoundController"
+	rounds.tracker = tracker
+	add_child(rounds)
+	rounds.respawn_requested.connect(_respawn_player)
+	ui_layer.add_child(load("res://ui/hud/hud.tscn").instantiate())
+	rounds.start(id)
+
+
+func _respawn_player() -> void:
+	if not arena.player_spawns.is_empty():
+		player.global_position = arena.player_spawns[randi() % arena.player_spawns.size()]
 	EventBus.player_spawned.emit(player)
