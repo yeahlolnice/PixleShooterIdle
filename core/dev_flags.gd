@@ -28,12 +28,18 @@ static func apply(args: PackedStringArray, debug_build: bool) -> bool:
 	if not wants_dev_game(args, debug_build):
 		return false
 	GameState.new_game()
+	var note: String
 	if UNLOCK_ALL_FLAG in args:
 		GameState.cash = ALL_CASH
 		GameState.lifetime_kills = ALL_LIFETIME_KILLS
 		GameState.prestige_count = ALL_BANS
+		note = "DEV MODE (--dev-unlock-all): every cheat unlocked, $1B cash. Press INSERT to buy. Not saved."
 	else:
 		GameState.cash = DEV_CASH
 		GameState.lifetime_kills = DEV_LIFETIME_KILLS
+		note = "DEV MODE (--dev-cash): $50K cash, first four cheats unlocked. Press INSERT to buy. Not saved."
 	CheatSystem.refresh_unlocks(false)
+	print("[DevFlags] ", note)
+	# Deferred: Main applies flags in _enter_tree, before the chat box exists.
+	ChatSystem.post.call_deferred(&"system", "SYSTEM", note)
 	return true
