@@ -1,0 +1,10 @@
+# Keep LF everywhere: shell scripts and Godot files must not get CRLF on checkout.
+* text=auto eol=lf
+*.png binary
+*.ttf binary
+*.otf binary
+*.wav binary
+*.ogg binary
+*.vox binary
+*.glb binary
+*.res binary
