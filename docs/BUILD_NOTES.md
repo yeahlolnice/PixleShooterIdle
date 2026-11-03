@@ -49,12 +49,21 @@ under 2 minutes.
 3. 0:15 Buy **Speed Hack**, then **Infinite Ammo**, **Auto Bhop**, **Wallhack** (one level each). Read the seller DMs.
 4. 0:40 Round goes live. Run around, shoot a bot, hold jump while moving to bhop. Toggle each cheat off/on in the menu to compare.
 5. 1:30 Upgrade each cheat 2–3 levels and note whether each upgrade is noticeable.
-6. 1:50 Close the game and relaunch **without** `--dev-cash` to check a normal save loads (cheats stay owned and enabled, tutorial lines don't repeat).
+6. 1:50 Close the game. Note: a `--dev-cash` session is **never saved** (D42). Relaunching without the flag starts
+   from your normal save (or a fresh game), so the cheats you bought above will *not* be there — that is expected, not a save bug.
+
+**Optional save check (about 3–4 minutes, no flag)** — save/load is already covered headlessly by
+`tests/integration/test_cheat_core_loop.gd` (unlock → buy → save → reload → still owned/enabled, tutorial not repeated).
+To see it yourself:
+1. Run `godot --path .` (no `--dev-cash`). Get 10 kills, press **Insert**, buy **Speed Hack** (100 cash).
+2. Wait for the round to end (the summary screen autosaves), or close the window (closing also saves).
+3. Relaunch without the flag. Open the mod menu: Speed Hack is still owned and toggled on, you move faster,
+   and the welcome/tutorial chat lines do not repeat.
 
 **Feel questions**
-- Speed Hack: is level 1 (+10%) noticeable? Is level 5 (~+45%) fun or does it make aiming hard? Does toggling off feel like a clear downgrade?
+- Speed Hack: is level 1 (+10%) noticeable? Is level 5 (1.5×, +50%) fun or does it make aiming hard? Does toggling off feel like a clear downgrade?
 - Infinite Ammo: do the bigger magazines (2× at L1) change how you shoot? Is the cost/benefit right vs. buying a gun?
-- Auto Bhop: does holding jump feel smooth? Does speed build in a readable way, and is the cap (1.2× → 2.5×) visible?
+- Auto Bhop: does holding jump feel smooth? Level 1 is hold-to-hop only (speed gain per hop is 0 at L1, cap 1.2×), so upgrade it to L3+ before judging speed build-up: does speed build in a readable way, and is the cap (1.2× → 2.5×) visible?
 - Wallhack: are outlines readable through walls without being noisy? Does range growth matter, and are bots easier to track?
 - Mod menu: is the slow-motion on open welcome or annoying? Are prices and unlock lines clear?
 - Chat: do the SYSTEM and seller lines teach the game without feeling intrusive? Is the order of purchase lines sensible?
