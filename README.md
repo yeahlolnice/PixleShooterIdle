@@ -16,7 +16,8 @@ godot --path . -e               # open the editor
 tools/export.sh linux           # -> build/linux/CheatCodeIdle.x86_64
 tools/export.sh windows         # -> build/windows/CheatCodeIdle.exe
 tools/screenshot_tour.sh        # windowed tour of menus + every cheat -> build/screens/*.png
-godot --path . -- --dev-unlock-all   # QA: every cheat unlocked, 1e9 cash, save untouched (debug only)
+godot --path . -- --dev-unlock-all   # QA: every cheat unlocked, 1e9 cash, save untouched
+# ...or in game: Esc -> "DEV: unlock everything" (dev tools on; that session stops saving)
 ```
 On Windows/macOS install Godot 4.7.2 from godotengine.org, open `project.godot`, and press F5.
 `tools/install_godot.sh --no-templates` skips the ~1.2 GB templates if you only need to run tests.

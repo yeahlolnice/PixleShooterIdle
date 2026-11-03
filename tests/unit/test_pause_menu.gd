@@ -57,6 +57,24 @@ func test_escape_closes_another_open_menu_first() -> void:
 	assert_false(get_tree().paused)
 
 
+func test_dev_unlock_button_unlocks_everything_and_stops_saving() -> void:
+	var saved := GameState.to_dict()
+	var was_persistent := GameState.persistence_enabled
+	GameState.new_game()
+	assert_true(DevFlags.dev_tools_enabled(), "tests run in a debug build")
+	assert_not_null(_pause.dev_unlock_button)
+	assert_false(CheatSystem.is_unlocked("noclip"))
+	_pause.dev_unlock_button.pressed.emit()
+	for cheat in CheatSystem.cheats() + CheatSystem.upgrades():
+		assert_true(CheatSystem.is_unlocked(cheat.id), cheat.id)
+	assert_true(CheatSystem.can_purchase("noclip"), "enough cash")
+	assert_false(GameState.persistence_enabled, "session no longer saved")
+	assert_true(_pause.dev_unlock_button.disabled)
+	GameState.from_dict(saved)
+	CheatSystem.refresh_unlocks(false)
+	assert_false(was_persistent, "tests never had the real save on")
+
+
 func test_escape_left_to_chat_log() -> void:
 	EventBus.menu_toggled.emit(&"chat", true)
 	assert_false(_pause.handle_escape(), "chat box handles it")

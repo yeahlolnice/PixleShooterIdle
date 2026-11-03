@@ -21,9 +21,9 @@ var spawner: BotSpawner
 
 func _enter_tree() -> void:
 	# Before children's _ready, so WeaponManager equips the saved gun.
-	# --dev-cash / --dev-unlock-all (after `--`, debug builds only): QA shortcuts, see
-	# core/dev_flags.gd and DECISIONS D42/D50. Never touch the save file.
-	if use_save_file and DevFlags.apply(OS.get_cmdline_user_args(), OS.is_debug_build()):
+	# --dev-cash / --dev-unlock-all (after `--`, dev tools only): QA shortcuts, see
+	# core/dev_flags.gd and DECISIONS D42/D50/D52. Never touch the save file.
+	if use_save_file and DevFlags.apply(OS.get_cmdline_user_args(), DevFlags.dev_tools_enabled()):
 		use_save_file = false
 	if use_save_file and not GameState.persistence_enabled:
 		GameState.enable_persistence()

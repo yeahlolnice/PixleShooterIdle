@@ -68,6 +68,9 @@ func _run() -> void:
 	var pause := _ui(PauseMenu) as PauseMenu
 	pause.open_menu()
 	await _snap("pause_menu")
+	if pause.dev_unlock_button:
+		pause.dev_unlock_button.pressed.emit()
+		await _snap("pause_dev_unlocked")
 	pause.close_menu()
 
 	rounds.advance(rounds.time_left + 0.05)   # live -> summary

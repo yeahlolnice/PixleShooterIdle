@@ -4,12 +4,15 @@ extends Control
 ## if the chat log is open, the chat box handles Esc itself. Otherwise Esc opens
 ## this menu: the scene tree pauses (round timer, bots, physics stop), the mouse
 ## is freed via menu_toggled("pause"), and Resume / Settings / Quit are offered.
-## Quit saves (same path as closing the window) and exits.
+## Quit saves (same path as closing the window) and exits. With dev tools on
+## (DevFlags), a DEV button unlocks everything for the session and stops saving.
 
 const MENU_ID := &"pause"
 
 var _open_menus: Dictionary = {}
 var _settings_button: Button
+## Only when DevFlags.dev_tools_enabled(); null otherwise.
+var dev_unlock_button: Button
 
 
 func _ready() -> void:
@@ -39,6 +42,10 @@ func _ready() -> void:
 	_settings_button.disabled = true  # TASK-044
 	box.add_child(_settings_button)
 	box.add_child(_button("Quit to desktop", quit_game))
+	if DevFlags.dev_tools_enabled():
+		dev_unlock_button = _button("DEV: unlock everything (not saved)", _on_dev_unlock)
+		dev_unlock_button.add_theme_color_override("font_color", DataRegistry.color("danger"))
+		box.add_child(dev_unlock_button)
 	EventBus.menu_toggled.connect(_on_menu_toggled)
 
 
@@ -73,6 +80,12 @@ func close_menu() -> void:
 	visible = false
 	get_tree().paused = false
 	EventBus.menu_toggled.emit(MENU_ID, false)
+
+
+func _on_dev_unlock() -> void:
+	DevFlags.unlock_all_in_session()
+	dev_unlock_button.text = "DEV: unlocked - press INSERT to buy"
+	dev_unlock_button.disabled = true
 
 
 func quit_game() -> void:
