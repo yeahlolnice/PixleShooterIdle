@@ -37,6 +37,9 @@ func _ready() -> void:
 	add_child(rounds)
 	rounds.respawn_requested.connect(_respawn_player)
 	ui_layer.add_child(load("res://ui/hud/hud.tscn").instantiate())
+	var buy_menu: BuyMenu = load("res://ui/buy_menu/buy_menu.tscn").instantiate()
+	buy_menu.weapon_manager = player.get_node_or_null("WeaponManager")
+	ui_layer.add_child(buy_menu)
 	rounds.start(id)
 
 
