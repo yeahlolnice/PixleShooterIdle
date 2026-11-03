@@ -157,6 +157,20 @@ Facade; backend chosen once in `_ready()` and logged once:
 GodotSteam (Phase 5) adds `autoload/steam_service_godotsteam.gd` extending `steam_backend.gd`;
 `select_backend` picks it automatically when the `Steam` singleton exists.
 
+### CheatSystem (`cheats/cheat_system.gd`, autoload after SteamService)
+Owns the 12 cheats and mod-menu upgrades (Server Slots) as `CheatBase` resources built from
+`data/cheats.json`, and is the only writer of `GameState.cheat_levels/cheat_enabled/server_slots`.
+- Queries: `cheats()`, `upgrades()`, `get_cheat(id)`, `level(id)`, `is_owned`, `is_enabled`,
+  `is_unlocked`, `is_maxed`, `next_cost`, `can_purchase`, `any_cheat_active()` (cheats only),
+  `effect(id, key)` (neutral unless owned and enabled), `extra_bots()`.
+- Actions: `purchase(id)` (first buy enables the cheat and emits `cheat_purchased` then
+  `cheat_toggled(id, true)`), `set_enabled(id, on)` / `toggle(id)` (calls `apply()` / `remove()`),
+  `refresh_unlocks()` (call after prestige changes).
+- Re-applies owned+enabled cheats on `player_spawned`, `gun_equipped` and `game_state_loaded`.
+- `CheatBase` (`cheats/cheat_base.gd`): `apply(player, level)`, `remove(player)`, `cost(level)`,
+  `max_level`, `value_at(key, level)`. Default apply/remove handle `player`/`weapon` effects;
+  per-cheat scripts (named in data) override for custom behaviour.
+
 ### Economy (`core/economy.gd`, `class_name Economy`, static)
 
 | Function | Formula |
