@@ -21,13 +21,12 @@ extends CharacterBody3D
 ## so hopping by hand takes CS-style timing.
 ##
 ## Auto Bhop hook (only the auto_bhop cheat calls these):
-##   set_bhop({"autostrafe": 0.5, "max_hop_speed_mult": 1.5, "uncapped": false})
+##   set_bhop({"max_hop_speed_mult": 6.5, "uncapped": false})
 ##   clear_bhop()                            # plain jumping again
-## With it, holding jump hops on every landing tick. While `autostrafe` > 0 the
-## cheat also strafes for you in the air: it pushes at right angles to the
-## velocity (the best angle for gain), turning toward the move direction, and
-## keeps that fraction of the gain. Auto-strafe speed stops at effective
-## move_speed * max_hop_speed_mult unless uncapped; it never slows the player.
+## With it, holding jump hops perfectly on every landing tick; strafing is still
+## up to the player. While it is on, speed gained by air strafing stops at
+## effective move_speed * max_hop_speed_mult unless uncapped (it never slows the
+## player). Without the cheat, hand bhopping is uncapped, as in CS.
 ##
 ## God Mode hook (only the god_mode cheat calls this):
 ##   set_god_mode(seconds_per_kill, permanent)   # (0, false) = off
@@ -66,8 +65,6 @@ var _respawn_timer := 0.0
 var _spawn_index := 0
 ## A jump press waiting for the next physics tick.
 var _jump_queued := false
-## Auto-strafe side, +1 left / -1 right; flips each tick to hold a straight line.
-var _strafe_side := 1.0
 ## God Mode: seconds of invulnerability left, and the cheat's settings.
 var invuln_left := 0.0
 var _god_per_kill := 0.0
@@ -382,16 +379,16 @@ func _ground_move(horizontal: Vector3, wish: Vector3, delta: float) -> Vector3:
 
 
 func _air_move(horizontal: Vector3, wish: Vector3, delta: float) -> Vector3:
-	var autostrafe := float(bhop.get("autostrafe", 0.0))
-	var speed := horizontal.length()
-	if autostrafe > 0.0 and speed > 0.0:
-		var heading := horizontal / speed
-		var steer := wish.normalized() if wish.length_squared() > 0.0001 else heading
-		if heading.dot(steer) >= 0.0:  # pressing back still brakes normally
-			return _autostrafe(horizontal, heading, steer, autostrafe, delta)
 	if wish.length_squared() <= 0.0001:
 		return horizontal
-	return air_accelerate(horizontal, wish.normalized(), effective(&"move_speed") * minf(wish.length(), 1.0), delta)
+	var speed := horizontal.length()
+	var out := air_accelerate(horizontal, wish.normalized(), effective(&"move_speed") * minf(wish.length(), 1.0), delta)
+	if has_bhop():
+		# Auto Bhop cap: strafing cannot build past it, but never slows the player.
+		var limit := maxf(hop_speed_cap(), speed)
+		if out.length() > limit:
+			out = out.normalized() * limit
+	return out
 
 
 ## Source PM_AirAccelerate: adds speed along `dir` only while the velocity's
@@ -402,21 +399,6 @@ func air_accelerate(horizontal: Vector3, dir: Vector3, wish_speed: float, delta:
 	if add <= 0.0:
 		return horizontal
 	return horizontal + dir * minf(effective(&"air_accel") * wish_speed * delta, add)
-
-
-## Auto Bhop's strafe: a right-angle push on the side that turns toward `steer`;
-## once on course it alternates sides so the path stays straight.
-func _autostrafe(horizontal: Vector3, heading: Vector3, steer: Vector3, strength: float, delta: float) -> Vector3:
-	var speed := horizontal.length()
-	var left := Vector3.UP.cross(heading)
-	var side := left.dot(steer)
-	if absf(side) < float(tuning.get("air_speed_cap", 0.7)) / speed:
-		_strafe_side = -_strafe_side
-	else:
-		_strafe_side = signf(side)
-	var pushed := air_accelerate(horizontal, left * _strafe_side, effective(&"move_speed"), delta)
-	var new_speed := minf(lerpf(speed, pushed.length(), strength), maxf(hop_speed_cap(), speed))
-	return pushed.normalized() * new_speed
 
 
 # --- Health ---------------------------------------------------------------------

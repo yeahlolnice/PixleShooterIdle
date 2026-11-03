@@ -143,13 +143,12 @@ func test_auto_bhop_level_1_and_max_settings() -> void:
 	var p := MockPlayer.new()
 	c.apply(p, 1)
 	assert_false(p.bhop.is_empty(), "level 1: hold jump to hop")
-	assert_eq(p.bhop["autostrafe"], 0.0, "no auto-strafe at level 1")
+	assert_false(p.bhop.has("autostrafe"), "perfect jumps only, no auto-strafe")
+	assert_almost_eq(p.bhop["max_hop_speed_mult"], float(_effect("auto_bhop", "max_hop_speed_mult")["from"]), 0.0001)
 	assert_false(p.bhop["uncapped"])
 	c.apply(p, c.max_level)
-	assert_almost_eq(p.bhop["autostrafe"], float(_effect("auto_bhop", "autostrafe")["to"]), 0.0001)
 	assert_true(p.bhop["uncapped"], "plan: no cap at max")
 	assert_false(c.value_at("uncapped", c.max_level - 1), "capped below max level")
-	assert_gt(float(c.value_at("autostrafe", 2)), 0.0, "auto-strafe from level 2")
 	c.remove(p)
 	assert_eq(p.bhop, {}, "bhop cleared")
 	assert_eq(p.stat_mods, {})
@@ -171,7 +170,7 @@ func test_hop_speed_cap_follows_level_and_speed_hack() -> void:
 	assert_false(p.has_bhop())
 
 
-# --- CS air strafing (no cheat) ----------------------------------------------------
+# --- CS air strafing ---------------------------------------------------------------
 
 func test_air_accelerate_only_caps_speed_along_wish_direction() -> void:
 	var p: Player = add_child_autofree(PlayerScene.instantiate())
@@ -217,42 +216,40 @@ func _hop_speeds(p: Player, hops: int, strafe: bool = false) -> Array:
 	return speeds
 
 
-func test_manual_strafe_jumping_builds_speed_without_cheat_or_cap() -> void:
+func test_auto_bhop_alone_keeps_speed_no_auto_strafe() -> void:
+	var p: Player = add_child_autofree(PlayerScene.instantiate())
+	var c := _cheat("auto_bhop")
+	var ms := p.effective(&"move_speed")
+	c.apply(p, c.max_level)
+	var speeds := _hop_speeds(p, 6)
+	assert_eq(speeds.size(), 6, "hopped on every landing")
+	for s in speeds:
+		assert_almost_eq(s, ms, 0.01, "perfect hops, no free speed")
+
+
+## A low test cap (not the data value) so the cap is reached in a few hops.
+const TEST_CAP_MULT := 1.5
+
+
+func test_strafe_speed_capped_while_auto_bhop_is_on() -> void:
+	var p: Player = add_child_autofree(PlayerScene.instantiate())
+	var cap := p.effective(&"move_speed") * TEST_CAP_MULT
+	p.set_bhop({"max_hop_speed_mult": TEST_CAP_MULT, "uncapped": false})
+	var speeds := _hop_speeds(p, 25, true)
+	assert_gt(speeds[1], speeds[0], "strafing builds speed")
+	assert_almost_eq(speeds[-1], cap, 0.01, "reaches the cap")
+	for s in speeds:
+		assert_lte(s, cap + 0.001)
+	p.set_bhop({"max_hop_speed_mult": TEST_CAP_MULT, "uncapped": true})
+	assert_gt(_hop_speeds(p, 25, true)[-1], cap + 1.0, "uncapped goes past it")
+
+
+func test_manual_strafe_jumping_without_cheat_is_uncapped() -> void:
 	var p: Player = add_child_autofree(PlayerScene.instantiate())
 	var ms := p.effective(&"move_speed")
-	var no_strafe := _hop_speeds(p, 4)
-	for s in no_strafe:
+	for s in _hop_speeds(p, 4):
 		assert_almost_eq(s, ms, 0.01, "perfect hops with no strafing keep speed")
 	var speeds := _hop_speeds(p, 25, true)
 	assert_eq(speeds.size(), 25, "hopped on every landing")
 	assert_gt(speeds[1], speeds[0], "strafing builds speed per hop")
-	assert_gt(speeds[-1], ms * float(_effect("auto_bhop", "max_hop_speed_mult")["to"]), "no cap for manual strafing")
-
-
-func test_bhop_speed_builds_per_hop_and_caps_below_max() -> void:
-	var p: Player = add_child_autofree(PlayerScene.instantiate())
-	var c := _cheat("auto_bhop")
-	var lvl := c.max_level - 1
-	c.apply(p, lvl)
-	var cap := p.effective(&"move_speed") * float(c.value_at("max_hop_speed_mult", lvl))
-	var speeds := _hop_speeds(p, 25)
-	assert_eq(speeds.size(), 25, "hopped on every landing")
-	assert_gt(speeds[1], speeds[0], "auto-strafe builds speed per hop with no input")
-	assert_gt(speeds[2], speeds[1])
-	assert_almost_eq(speeds[-1], cap, 0.01, "reaches the cap")
-	for s in speeds:
-		assert_lte(s, cap + 0.001)
-
-
-func test_bhop_uncapped_at_max_and_level_1_keeps_speed() -> void:
-	var p: Player = add_child_autofree(PlayerScene.instantiate())
-	var c := _cheat("auto_bhop")
-	var ms := p.effective(&"move_speed")
-	c.apply(p, 1)
-	var flat := _hop_speeds(p, 4)
-	for s in flat:
-		assert_almost_eq(s, ms, 0.01, "level 1 hops keep speed")
-	c.apply(p, c.max_level)
-	var cap_below_max := ms * float(c.value_at("max_hop_speed_mult", c.max_level - 1))
-	var speeds := _hop_speeds(p, 12)
-	assert_gt(speeds[-1], cap_below_max, "no cap at max level")
+	assert_gt(speeds[-1], ms * TEST_CAP_MULT + 1.0, "no cap without the cheat")

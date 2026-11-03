@@ -111,8 +111,8 @@ any other file must exist here (checked at load).
 Neutral (off/unowned) values: `false` for bools, `1.0` for player/weapon multipliers, `0.0` for
 cheat/game values. Each player/weapon modifier key belongs to one cheat only.
 Speed Hack, Infinite Ammo and Auto Bhop name scripts in `cheats/`. Auto Bhop's `cheat` effects
-(`autostrafe`, `max_hop_speed_mult`, `uncapped`) are handed to `Player.set_bhop()` by its
-`apply()` and cleared by `remove()`; see DECISIONS D39, D43–D44.
+(`max_hop_speed_mult`, `uncapped`) are handed to `Player.set_bhop()` by its
+`apply()` and cleared by `remove()`; see DECISIONS D39, D43, D51.
 Server Slots' level is stored in `GameState.server_slots`; its `extra_bots` effect is added to
 `arenas.json bots_per_wave` by RoundController via `CheatSystem.extra_bots()`.
 
