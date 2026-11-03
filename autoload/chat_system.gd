@@ -8,7 +8,8 @@ extends Node
 ## trigger format and docs/ARCHITECTURE.md for the event names.
 ##
 ## Once-only triggers are recorded in GameState.chat_flags (saved with the game)
-## so the tutorial never repeats. Channel mutes are a player setting stored in
+## when their line actually posts, so the tutorial never repeats and a save made
+## while a delayed line is still queued does not lose it. Channel mutes are a player setting stored in
 ## settings_path, not in the save.
 
 ## A channel was muted or unmuted (the chat UI rebuilds its view).
@@ -30,7 +31,7 @@ var settings_path := SETTINGS_PATH
 var rng := RandomNumberGenerator.new()
 
 var _data: Dictionary = {}
-var _pending: Array[Dictionary] = []  # {time_left, seq, channel, sender, text}
+var _pending: Array[Dictionary] = []  # {time_left, seq, channel, sender, text, flags}
 var _seq := 0
 
 
@@ -65,21 +66,26 @@ func data() -> Dictionary:
 # --- Triggers -----------------------------------------------------------------
 
 ## Runs every trigger for `event_name`. Lines with no delay post now; others are
-## queued for tick(). Returns the lines produced (muted ones included), each
+## queued for tick(). Once-only flags (and `gate_flag`, if given) are written to
+## GameState.chat_flags when the line posts; `gate_flag` is written at once if
+## nothing is queued. Returns the lines produced (muted ones included), each
 ## {channel, sender, text, delay_s, trigger_id}.
-func handle_event(event_name: StringName, payload: Dictionary = {}) -> Array[Dictionary]:
+func handle_event(event_name: StringName, payload: Dictionary = {}, gate_flag := "") -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	var ctx := _context(payload)
 	for trigger in _data.get("triggers", []):
 		if trigger["event"] != String(event_name) or not matches(trigger, ctx):
 			continue
 		var flag := once_flag(trigger, ctx)
-		if flag != "" and GameState.chat_flags.has(flag):
+		if flag != "" and is_fired(flag):
 			continue
 		if trigger.has("chance") and rng.randf() >= float(trigger["chance"]):
 			continue
+		var flags: Array[String] = []
 		if flag != "":
-			GameState.chat_flags[flag] = true
+			flags.append(flag)
+		if gate_flag != "":
+			flags.append(gate_flag)
 		var lines: Array = trigger["lines"]
 		var channel := StringName(trigger["channel"])
 		var msg := {
@@ -91,10 +97,13 @@ func handle_event(event_name: StringName, payload: Dictionary = {}) -> Array[Dic
 		}
 		out.append(msg)
 		if msg["delay_s"] <= 0.0:
+			_mark_fired(flags.filter(func(f): return f != gate_flag))  # gate: see below
 			post(channel, msg["sender"], msg["text"])
 		else:
 			_seq += 1
-			_pending.append({"time_left": msg["delay_s"], "seq": _seq, "channel": channel, "sender": msg["sender"], "text": msg["text"]})
+			_pending.append({"time_left": msg["delay_s"], "seq": _seq, "channel": channel, "sender": msg["sender"], "text": msg["text"], "flags": flags})
+	if gate_flag != "" and not is_fired(gate_flag):
+		_mark_fired([gate_flag])  # nothing still queued under the gate: the event is done
 	return out
 
 
@@ -113,11 +122,24 @@ func tick(delta: float) -> void:
 	_pending = waiting
 	due.sort_custom(func(a, b): return a["time_left"] < b["time_left"] or (a["time_left"] == b["time_left"] and a["seq"] < b["seq"]))
 	for p in due:
+		# A gate flag shared by several lines is saved with the last one still queued.
+		_mark_fired(p["flags"].filter(func(f): return not is_fired(f)))
 		post(p["channel"], p["sender"], p["text"])
 
 
 func pending_count() -> int:
 	return _pending.size()
+
+
+## True if `flag` is saved in GameState.chat_flags or held by a queued line
+## (so a trigger cannot queue twice while its first line is still waiting).
+func is_fired(flag: String) -> bool:
+	if GameState.chat_flags.has(flag):
+		return true
+	for p in _pending:
+		if p["flags"].has(flag):
+			return true
+	return false
 
 
 ## Records a line and shows it unless its channel is muted. Returns true if shown.
@@ -245,12 +267,7 @@ func _context(payload: Dictionary) -> Dictionary:
 
 
 func _cheat_name(cheat_id: String) -> String:
-	var cheats: Variant = DataRegistry.get_file("cheats")
-	if typeof(cheats) == TYPE_DICTIONARY:
-		for c in cheats.get("cheats", []):
-			if typeof(c) == TYPE_DICTIONARY and c.get("id") == cheat_id and c.has("name"):
-				return str(c["name"])
-	return cheat_id.capitalize()
+	return str(DataRegistry.cheat(cheat_id).get("name", cheat_id.capitalize()))
 
 
 ## trigger.sender > payload.bot_name > channel sender > random bot name.
@@ -266,13 +283,18 @@ func _sender(trigger: Dictionary, ctx: Dictionary) -> String:
 	return str(names[rng.randi() % names.size()]) if not names.is_empty() else ""
 
 
-## Fires a derived event only the first time ever (recorded in chat_flags).
+func _mark_fired(flags: Array) -> void:
+	for f in flags:
+		GameState.chat_flags[f] = true
+
+
+## Fires a derived event only the first time ever. The event flag is saved in
+## chat_flags once its last queued line posts, like once-only triggers.
 func _first_time(event_name: String, payload: Dictionary = {}) -> void:
 	var flag := EVENT_FLAG_PREFIX + event_name
-	if GameState.chat_flags.has(flag):
+	if is_fired(flag):
 		return
-	GameState.chat_flags[flag] = true
-	handle_event(StringName(event_name.get_slice(":", 0)), payload)
+	handle_event(StringName(event_name.get_slice(":", 0)), payload, flag)
 
 
 func _on_round_state(state: StringName, info: Dictionary) -> void:

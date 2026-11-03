@@ -107,9 +107,11 @@ Every payload with `cheat_id` also gets `{cheat_name}`.
 ### ChatSystem (`autoload/chat_system.gd`, TASK-013)
 Matches events against `data/chat.json` triggers and posts lines via `EventBus.chat_message_posted`.
 Once-only triggers set `GameState.chat_flags[<once_key or id>]`, so they never repeat after a load.
+The flag is written when the line actually posts (not when it is queued), so saving while a delayed
+line waits does not lose it; a queued line also blocks its trigger from queueing again.
 | Method | Notes |
 |---|---|
-| `handle_event(name, payload) -> Array[Dictionary]` | runs triggers; zero-delay lines post now, others queue |
+| `handle_event(name, payload, gate_flag = "") -> Array[Dictionary]` | runs triggers; zero-delay lines post now, others queue |
 | `tick(delta)` | posts due queued lines (called from `_process`) |
 | `post(channel, sender, text) -> bool` | adds to `history`; emits unless the channel is muted |
 | `set_channel_muted(channel, muted)`, `is_muted(channel)` | persisted in `user://settings.cfg`; emits `mute_changed` |
@@ -176,6 +178,20 @@ Facade; backend chosen once in `_ready()` and logged once:
 
 GodotSteam (Phase 5) adds `autoload/steam_service_godotsteam.gd` extending `steam_backend.gd`;
 `select_backend` picks it automatically when the `Steam` singleton exists.
+
+### CheatSystem (`cheats/cheat_system.gd`, autoload after SteamService)
+Owns the 12 cheats and mod-menu upgrades (Server Slots) as `CheatBase` resources built from
+`data/cheats.json`, and is the only writer of `GameState.cheat_levels/cheat_enabled/server_slots`.
+- Queries: `cheats()`, `upgrades()`, `get_cheat(id)`, `level(id)`, `is_owned`, `is_enabled`,
+  `is_unlocked`, `is_maxed`, `next_cost`, `can_purchase`, `any_cheat_active()` (cheats only),
+  `effect(id, key)` (neutral unless owned and enabled), `extra_bots()`.
+- Actions: `purchase(id)` (first buy enables the cheat and emits `cheat_purchased` then
+  `cheat_toggled(id, true)`), `set_enabled(id, on)` / `toggle(id)` (calls `apply()` / `remove()`),
+  `refresh_unlocks()` (call after prestige changes).
+- Re-applies owned+enabled cheats on `player_spawned`, `gun_equipped` and `game_state_loaded`.
+- `CheatBase` (`cheats/cheat_base.gd`): `apply(player, level)`, `remove(player)`, `cost(level)`,
+  `max_level`, `value_at(key, level)`. Default apply/remove handle `player`/`weapon` effects;
+  per-cheat scripts (named in data) override for custom behaviour.
 
 ### Economy (`core/economy.gd`, `class_name Economy`, static)
 

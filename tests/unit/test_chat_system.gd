@@ -94,6 +94,7 @@ func test_once_only_trigger_fires_once() -> void:
 
 func test_once_only_survives_save_and_load() -> void:
 	_chat.handle_event(&"first_match")
+	_chat.tick(5.0)  # both lines posted (the queued-at-save case has its own test)
 	var json := JSON.stringify(GameState.to_dict())
 	GameState.new_game()
 	assert_eq(_chat.handle_event(&"first_match").size(), 2, "fresh game shows the tutorial")
@@ -101,6 +102,36 @@ func test_once_only_survives_save_and_load() -> void:
 	_posted.clear()
 	assert_eq(_chat.handle_event(&"first_match").size(), 0, "loaded save remembers the tutorial")
 	assert_eq(_posted.size(), 0)
+
+
+func test_delayed_once_line_survives_save_before_it_posts() -> void:
+	_chat.handle_event(&"first_match")
+	assert_eq(_chat.pending_count(), 1)
+	assert_false(GameState.chat_flags.has("later"), "queued line is not marked fired yet")
+	assert_eq(_chat.handle_event(&"first_match").size(), 0, "queued line is not queued twice")
+	var json := JSON.stringify(GameState.to_dict())
+	# Quit before the line posts, then restart from the save.
+	_chat.configure(_fixture())
+	GameState.new_game()
+	GameState.from_dict(JSON.parse_string(json))
+	_posted.clear()
+	var out: Array[Dictionary] = _chat.handle_event(&"first_match")
+	assert_eq(out.size(), 1, "only the delayed line comes back")
+	assert_eq(out[0]["trigger_id"], "later")
+	_chat.tick(5.0)
+	assert_eq(_posted, [[&"seller", "x_Hax_x", "press INSERT"]])
+	assert_true(GameState.chat_flags.has("later"))
+
+
+func test_first_time_gate_waits_for_its_last_queued_line() -> void:
+	_chat._first_time("first_match")
+	assert_false(GameState.chat_flags.has("event:first_match"))
+	_chat._first_time("first_match")
+	assert_eq(_chat.pending_count(), 1, "gate held while a line is queued")
+	_chat.tick(5.0)
+	assert_true(GameState.chat_flags.has("event:first_match"))
+	_chat._first_time("first_match")
+	assert_eq(_chat.pending_count(), 0)
 
 
 func test_once_key_is_per_payload() -> void:
@@ -128,6 +159,13 @@ func test_placeholder_substitution() -> void:
 func test_cheat_name_is_derived_from_cheat_id() -> void:
 	_chat.handle_event(&"cheat_unlocked", {"cheat_id": "speed_hack"})
 	assert_eq(_posted[0][2], "New: Speed Hack")
+
+
+func test_cheat_name_comes_from_cheats_json() -> void:
+	assert_eq(DataRegistry.cheat("speed_hack").get("name"), "Speed Hack")
+	assert_eq(_chat._cheat_name("speed_hack"), "Speed Hack")
+	assert_eq(_chat._cheat_name("wallhack"), str(DataRegistry.cheat("wallhack")["name"]))
+	assert_eq(_chat._cheat_name("not_a_cheat"), "Not A Cheat", "unknown ids fall back to a readable name")
 
 
 func test_when_condition_filters_on_payload() -> void:
@@ -187,12 +225,16 @@ func test_autoload_derives_first_match_and_first_cash_once() -> void:
 	GameState.chat_flags.clear()
 	EventBus.round_state_changed.emit(EventBus.ROUND_FREEZE, {"round": 1, "duration": 0.0})
 	EventBus.round_state_changed.emit(EventBus.ROUND_FREEZE, {"round": 1, "duration": 0.0})
+	assert_false(GameState.chat_flags.has("tut_welcome"), "flag waits for the delayed line")
+	ChatSystem.tick(10.0)
 	assert_true(GameState.chat_flags.has("event:first_match"))
 	assert_true(GameState.chat_flags.has("tut_welcome"))
 	GameState.add_cash(10.0)
+	ChatSystem.tick(10.0)
 	assert_true(GameState.chat_flags.has("event:first_cash"))
 	assert_true(GameState.chat_flags.has("seller_insert"))
 	EventBus.cheat_toggled.emit("speed_hack", true)
+	ChatSystem.tick(10.0)
 	assert_true(GameState.chat_flags.has("event:cheat_first_use:speed_hack"))
 	assert_true(GameState.chat_flags.has("seller_first_use_speed_hack"))
 	ChatSystem.configure(DataRegistry.chat())  # drop queued lines so they do not leak into other tests

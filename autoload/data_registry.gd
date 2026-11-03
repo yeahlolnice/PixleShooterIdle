@@ -81,9 +81,7 @@ func bot(id: String) -> Dictionary:
 
 ## All arenas sorted by "order" (progression order).
 func arenas() -> Array:
-	var list: Array = _data.get("arenas", {}).get("arenas", []).duplicate()
-	list.sort_custom(func(a, b): return a["order"] < b["order"])
-	return list
+	return _sorted_by_order(_data.get("arenas", {}).get("arenas", []))
 
 
 func arena(id: String) -> Dictionary:
@@ -100,6 +98,34 @@ func first_arena_id() -> String:
 ## aim_error_deg are multiplied by reaction_time / aim_error (lower = harder).
 func bot_stats(bot_id: String, arena_id: String) -> Dictionary:
 	return resolve_bot_stats(bot(bot_id), arena(arena_id))
+
+
+## All 12 cheats from cheats.json, sorted by "order" (the unlock ladder).
+func cheats() -> Array:
+	return _sorted_by_order(_data.get("cheats", {}).get("cheats", []))
+
+
+func cheat(id: String) -> Dictionary:
+	return _find_by_id(cheats(), id)
+
+
+## Mod-menu upgrades that are not cheats (Server Slots), sorted by "order".
+func cheat_upgrades() -> Array:
+	return _sorted_by_order(_data.get("cheats", {}).get("upgrades", []))
+
+
+func cheat_upgrade(id: String) -> Dictionary:
+	return _find_by_id(cheat_upgrades(), id)
+
+
+## Mod-menu tab names in display order.
+func cheat_tabs() -> Array:
+	return _data.get("cheats", {}).get("tabs", [])
+
+
+## Default per-level price growth for cheats and upgrades (entries may override).
+func cheat_cost_growth() -> float:
+	return float(_data.get("cheats", {}).get("cost_growth", 1.0))
 
 
 ## Palette colour by name. Unknown names warn and fall back to the palette's "missing" entry
@@ -122,8 +148,8 @@ func chat() -> Dictionary:
 	return _data.get("chat", {})
 
 
-## Raw access for files that do not have a typed getter yet (e.g. cheats, chat
-## once their tickets land). Prefer adding a typed getter.
+## Raw access for files that do not have a typed getter yet. Prefer adding a
+## typed getter.
 func get_file(stem: String) -> Variant:
 	return _data.get(stem)
 
@@ -216,6 +242,63 @@ static func cross_validate(data: Dictionary, errors: PackedStringArray) -> void:
 	for i in range(triggers.size()):
 		if not channels.has(triggers[i]["channel"]):
 			errors.append("chat.json: triggers[%d].channel: '%s' is not a channel" % [i, triggers[i]["channel"]])
+	if data.has("cheats"):
+		validate_cheats(data["cheats"], errors)
+
+
+const CHEAT_TARGETS := ["player", "weapon", "cheat", "game"]
+const CHEAT_CURVES := ["linear", "exp"]
+
+
+## cheats.json: unique ids across cheats and upgrades, known tab, exactly one
+## unlock rule, effects well formed for their type.
+static func validate_cheats(cheats_data: Dictionary, errors: PackedStringArray) -> void:
+	var tabs: Array = cheats_data.get("tabs", [])
+	var groups := {"cheats": cheats_data.get("cheats", []), "upgrades": cheats_data.get("upgrades", [])}
+	var seen := {}
+	for group in groups:
+		var list: Array = groups[group]
+		for i in range(list.size()):
+			var c: Dictionary = list[i]
+			var where := "cheats.json: %s[%d]" % [group, i]
+			if seen.has(c["id"]):
+				errors.append("%s.id: duplicate id '%s'" % [where, c["id"]])
+			seen[c["id"]] = true
+			if not tabs.has(c["tab"]):
+				errors.append("%s.tab: '%s' is not in tabs" % [where, c["tab"]])
+			if c["unlock"].has("kills") == c["unlock"].has("prestige"):
+				errors.append("%s.unlock: needs exactly one of kills or prestige" % where)
+			if c.has("script") and not ResourceLoader.exists(c["script"]):
+				errors.append("%s.script: '%s' not found" % [where, c["script"]])
+			var effects: Array = c["effects"]
+			for e in range(effects.size()):
+				_check_cheat_effect(effects[e], int(c["max_level"]), "%s.effects[%d]" % [where, e], errors)
+
+
+static func _check_cheat_effect(effect: Dictionary, max_level: int, where: String, errors: PackedStringArray) -> void:
+	if not CHEAT_TARGETS.has(effect["target"]):
+		errors.append("%s.target: '%s' is not one of %s" % [where, effect["target"], CHEAT_TARGETS])
+	match effect["type"]:
+		"number":
+			if not (effect.has("from") and effect.has("to") and effect.has("curve")):
+				errors.append("%s: number effects need from, to and curve" % where)
+			elif not CHEAT_CURVES.has(effect["curve"]):
+				errors.append("%s.curve: '%s' is not one of %s" % [where, effect["curve"], CHEAT_CURVES])
+			elif effect["curve"] == "exp" and (effect["from"] * effect["to"] <= 0.0):
+				errors.append("%s: exp curves need from and to non-zero with the same sign" % where)
+		"bool":
+			if not effect.has("from_level"):
+				errors.append("%s: bool effects need from_level" % where)
+			elif int(effect["from_level"]) > max_level:
+				errors.append("%s.from_level: %d is above max_level %d" % [where, effect["from_level"], max_level])
+		_:
+			errors.append("%s.type: '%s' is not number or bool" % [where, effect["type"]])
+
+
+static func _sorted_by_order(list: Array) -> Array:
+	var out := list.duplicate()
+	out.sort_custom(func(a, b): return a["order"] < b["order"])
+	return out
 
 
 static func _check_unique_ids(where: String, list: Array, errors: PackedStringArray) -> void:

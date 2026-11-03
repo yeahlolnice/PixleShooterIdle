@@ -110,6 +110,43 @@ const _CHAT_TRIGGER := {
 	"optional": ["once_key", "chance", "sender", "when"],
 }
 
+const _CHEAT_EFFECT := {
+	"type": "object",
+	"fields": {
+		"key": {"type": "string"},
+		"target": {"type": "string"},
+		"type": {"type": "string"},
+		"from": {"type": "number"},
+		"to": {"type": "number"},
+		"curve": {"type": "string"},
+		"from_level": {"type": "int", "min": 1},
+	},
+	"optional": ["from", "to", "curve", "from_level"],
+}
+
+## Cheats and mod-menu upgrades (Server Slots) share one shape.
+const _CHEAT := {
+	"type": "object",
+	"fields": {
+		"id": {"type": "string"},
+		"name": {"type": "string"},
+		"tab": {"type": "string"},
+		"order": {"type": "int", "min": 1},
+		"unlock": {
+			"type": "object",
+			"fields": {"kills": {"type": "int", "min": 0}, "prestige": {"type": "int", "min": 0}},
+			"optional": ["kills", "prestige"],
+		},
+		"base_cost": _NUM_NONNEG,
+		"cost_growth": _NUM_POS,
+		"max_level": {"type": "int", "min": 1},
+		"script": {"type": "string"},
+		"resets_on_prestige": {"type": "bool"},
+		"effects": {"type": "array", "items": _CHEAT_EFFECT},
+	},
+	"optional": ["cost_growth", "script", "resets_on_prestige"],
+}
+
 ## file stem -> root spec. Every file listed here is required.
 const FILES := {
 	"economy": {
@@ -208,6 +245,15 @@ const FILES := {
 			},
 			"bot_names": {"type": "array", "items": {"type": "string"}, "min_items": 1},
 			"triggers": {"type": "array", "items": _CHAT_TRIGGER, "min_items": 1},
+		},
+	},
+	"cheats": {
+		"type": "object",
+		"fields": {
+			"cost_growth": _NUM_POS,
+			"tabs": {"type": "array", "items": {"type": "string"}, "min_items": 1},
+			"cheats": {"type": "array", "items": _CHEAT, "min_items": 1},
+			"upgrades": {"type": "array", "items": _CHEAT},
 		},
 	},
 	"palette": {

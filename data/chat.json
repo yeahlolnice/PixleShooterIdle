@@ -43,7 +43,7 @@
     {"id": "seller_purchase", "event": "cheat_purchased", "channel": "seller", "once": true, "once_key": "seller_purchase_{cheat_id}", "delay_s": 1.5,
      "when": {"level": "1"},
      "lines": ["pleasure doing business. {cheat_name} is yours. upgrades make it stupid good."]},
-    {"id": "seller_first_use", "event": "cheat_first_use", "channel": "seller", "once": true, "once_key": "seller_first_use_{cheat_id}", "delay_s": 0.5,
+    {"id": "seller_first_use", "event": "cheat_first_use", "channel": "seller", "once": true, "once_key": "seller_first_use_{cheat_id}", "delay_s": 4.0,
      "lines": ["see? {cheat_name} on. nobody will notice. probably."]},
     {"id": "tut_death", "event": "player_died", "channel": "system", "once": true, "delay_s": 0.5,
      "lines": ["You died. You lose your gun and your streak, never your cash or cheats."]},

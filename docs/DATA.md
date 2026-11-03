@@ -84,6 +84,30 @@ player), `aim_error_deg` (random cone half-angle of bot shots), `fire_rate` (sho
 The one shared palette. `missing` (magenta) is the fallback for unknown names. Every colour used by
 any other file must exist here (checked at load).
 
+## cheats.json
+```json
+{ "cost_growth": 1.15, "tabs": ["Movement", "Visuals", "Combat", "Rage"],
+  "cheats":   [ { "id", "name", "tab", "order", "unlock": {"kills": n} | {"prestige": n},
+                  "base_cost", "max_level", "effects": [effect, ...],
+                  "cost_growth"?, "script"? } ],
+  "upgrades": [ same shape, e.g. server_slots, plus "resets_on_prestige"? ] }
+```
+| Key | Meaning |
+|---|---|
+| `cost_growth` | price growth per level; next price = `base_cost × growth^level_owned` (entry may override) |
+| `order` | ladder position; mod menu sorts by it |
+| `unlock.kills` | **lifetime** kills needed (a ban never re-locks a kill cheat) |
+| `unlock.prestige` | bans needed (God Mode 1, Spinbot 2, Noclip 3). Exactly one of kills/prestige |
+| `script` | optional `res://cheats/*.gd` extending CheatBase for custom apply/remove |
+| effect `type: "number"` | `from` at level 1 → `to` at `max_level`; `curve` is `linear` or `exp` (geometric; from/to non-zero, same sign) |
+| effect `type: "bool"` | true from `from_level` up (e.g. Infinite Ammo `infinite_reload` at max) |
+| effect `target` | `player` → `player.set_stat_mod(key)`; `weapon` → `weapon.set_modifier(key)`; `cheat`/`game` → read via `CheatSystem.effect(id, key)` |
+
+Neutral (off/unowned) values: `false` for bools, `1.0` for player/weapon multipliers, `0.0` for
+cheat/game values. Each player/weapon modifier key belongs to one cheat only.
+Server Slots' level is stored in `GameState.server_slots`; its `extra_bots` effect is added to
+`arenas.json bots_per_wave` by RoundController via `CheatSystem.extra_bots()`.
+
 ## chat.json
 Every chat line and chat UI string. Read by the `ChatSystem` autoload.
 | Key | Type | Meaning |
@@ -103,9 +127,6 @@ Optional: `once_key` (flag name with placeholders, e.g. `"unlock_{cheat_id}"` = 
 (overrides the channel sender). `{key}` in lines is replaced by payload values (whole numbers print
 without `.0`); `{cheat_name}` is derived from `cheat_id` (cheats.json `name`, else "Speed Hack" from
 `speed_hack`). Unknown placeholders are left as written.
-
-## Coming in later tickets
-`cheats.json` (TASK-009: 12 cheats + Server Slots, tab, unlock rule, base cost, per-level curves).
 
 ## Bot hit chance (TASK-003)
 
