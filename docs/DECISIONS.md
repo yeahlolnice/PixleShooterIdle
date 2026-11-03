@@ -31,3 +31,5 @@ When the plan is silent, pick the simplest option that fits the design, record i
 | D24 | Input uses physical keycodes | Same physical WASD on non-QWERTY layouts | Architect |
 | D25 | `.gitattributes` forces LF line endings | The factory git config has `core.autocrlf=true`, which would break shell scripts | Architect |
 | D26 | Godot is installed to `~/.local/godot` (symlink `~/.local/bin/godot`); scripts honour `$GODOT` | No root needed in fresh containers | Architect |
+| D27 | ChatSystem derives `first_match` (first freeze ever), `first_cash` (first positive cash change), `round_start`/`round_live` (each freeze/live) and `cheat_first_use` (first `cheat_toggled(id, true)` per cheat) from EventBus signals; "first" gates are stored in `GameState.chat_flags` as `event:<name>` | No emitter needed in other modules; once-only survives saves (TASK-013) | Rex |
+| D28 | Bot-channel mute is a player setting in `user://settings.cfg` (`[chat] muted_channels`), not in the save; muted lines stay in history and reappear in the log when unmuted | Settings are not progress; Phase 5 settings menu can reuse the file (TASK-013) | Rex |

@@ -84,9 +84,28 @@ player), `aim_error_deg` (random cone half-angle of bot shots), `fire_rate` (sho
 The one shared palette. `missing` (magenta) is the fallback for unknown names. Every colour used by
 any other file must exist here (checked at load).
 
+## chat.json
+Every chat line and chat UI string. Read by the `ChatSystem` autoload.
+| Key | Type | Meaning |
+|---|---|---|
+| `channels.<id>` | `{sender, color, format}` | `system` / `seller` / `bot`. `sender` is the shown name (`""` = random from `bot_names`), `color` a palette name, `format` the display line with `{sender}` and `{text}` |
+| `ui.<key>` | string | chat UI labels (`log_title`, `mute_bots`) |
+| `box.visible_lines` | int ≥ 1 | lines kept in the corner box |
+| `box.fade_after_s` / `fade_time_s` | seconds | a corner line starts fading after / fades over |
+| `box.log_max_lines` | int ≥ 1 | history kept for the scrollable log |
+| `bot_names` | string[] | random senders for bot lines |
+| `triggers[]` | object | see below |
+
+Trigger fields: `id` (unique), `event` (an event name, see ARCHITECTURE.md §3 "chat events"),
+`channel`, `once` (bool: fire once per save), `delay_s`, `lines` (one is picked at random).
+Optional: `once_key` (flag name with placeholders, e.g. `"unlock_{cheat_id}"` = once per cheat; default
+`id`), `when` (`{payload_key: "value"}`, all must match, compared as text), `chance` (0–1), `sender`
+(overrides the channel sender). `{key}` in lines is replaced by payload values (whole numbers print
+without `.0`); `{cheat_name}` is derived from `cheat_id` (cheats.json `name`, else "Speed Hack" from
+`speed_hack`). Unknown placeholders are left as written.
+
 ## Coming in later tickets
-`cheats.json` (TASK-009: 12 cheats + Server Slots, tab, unlock rule, base cost, per-level curves),
-`chat.json` (TASK-013: triggers, channel, once flag, delay, lines with `{placeholders}`).
+`cheats.json` (TASK-009: 12 cheats + Server Slots, tab, unlock rule, base cost, per-level curves).
 
 ## Bot hit chance (TASK-003)
 

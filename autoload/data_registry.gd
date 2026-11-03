@@ -117,6 +117,11 @@ func palette() -> Dictionary:
 	return _data.get("palette", {}).get("colors", {})
 
 
+## Whole chat.json: channels, chat box tuning, bot names and triggers.
+func chat() -> Dictionary:
+	return _data.get("chat", {})
+
+
 ## Raw access for files that do not have a typed getter yet (e.g. cheats, chat
 ## once their tickets land). Prefer adding a typed getter.
 func get_file(stem: String) -> Variant:
@@ -202,6 +207,15 @@ static func cross_validate(data: Dictionary, errors: PackedStringArray) -> void:
 		var blocks: Array = arena_def["blocks"]
 		for b in range(blocks.size()):
 			_check_color(colors, blocks[b]["color"], "arenas.json: arenas[%d].blocks[%d].color" % [a, b], errors)
+	var chat: Dictionary = data.get("chat", {})
+	var channels: Dictionary = chat.get("channels", {})
+	for c in channels:
+		_check_color(colors, channels[c]["color"], "chat.json: channels.%s.color" % c, errors)
+	var triggers: Array = chat.get("triggers", [])
+	_check_unique_ids("chat.json: triggers", triggers, errors)
+	for i in range(triggers.size()):
+		if not channels.has(triggers[i]["channel"]):
+			errors.append("chat.json: triggers[%d].channel: '%s' is not a channel" % [i, triggers[i]["channel"]])
 
 
 static func _check_unique_ids(where: String, list: Array, errors: PackedStringArray) -> void:

@@ -94,10 +94,29 @@ Signals only (plus `emit_chat_event`). Emitter column = the only code that shoul
 Round state constants: `EventBus.ROUND_FREEZE`, `ROUND_LIVE`, `ROUND_SUMMARY` (`&"freeze"`, `&"live"`,
 `&"summary"`). Cycle: freeze → live → summary → freeze.
 
-Known `chat_event` names (payload in braces; ChatSystem may add more, document them here):
-`first_match {}`, `round_start {round}`, `first_cash {amount}`, `cheat_unlocked {cheat_id}`,
-`cheat_purchased {cheat_id, level}`, `cheat_first_use {cheat_id}`, `player_died {}`,
-`mod_spawned {bot}`, `prestige {count}`.
+Known chat event names (payload in braces). ChatSystem derives most of them from EventBus signals,
+so no module needs to emit them; the rest arrive via `emit_chat_event`:
+- derived: `first_match {}` (first freeze ever), `round_start {round}` (every freeze),
+  `round_live {round}`, `first_cash {amount, total}` (first positive `cash_changed` ever),
+  `cheat_unlocked {cheat_id}`, `cheat_purchased {cheat_id, level}`,
+  `cheat_first_use {cheat_id}` (first `cheat_toggled(id, true)` per cheat), `player_died {}`,
+  `bot_killed {headshot, bot_type}`.
+- emitted by future systems: `mod_spawned {bot}`, `prestige {count}`.
+Every payload with `cheat_id` also gets `{cheat_name}`.
+
+### ChatSystem (`autoload/chat_system.gd`, TASK-013)
+Matches events against `data/chat.json` triggers and posts lines via `EventBus.chat_message_posted`.
+Once-only triggers set `GameState.chat_flags[<once_key or id>]`, so they never repeat after a load.
+| Method | Notes |
+|---|---|
+| `handle_event(name, payload) -> Array[Dictionary]` | runs triggers; zero-delay lines post now, others queue |
+| `tick(delta)` | posts due queued lines (called from `_process`) |
+| `post(channel, sender, text) -> bool` | adds to `history`; emits unless the channel is muted |
+| `set_channel_muted(channel, muted)`, `is_muted(channel)` | persisted in `user://settings.cfg`; emits `mute_changed` |
+| `visible_history()`, `channel_color(channel)`, `format_line(...)`, `ui_text(key)` | for the chat UI |
+| static `substitute`, `matches`, `once_flag`, `filter_muted`, `format_value` | pure, unit-tested |
+UI: `ui/chat/chat_box.tscn` (corner lines that fade; T/Enter opens the log with the bot-mute toggle,
+Esc closes; emits `menu_toggled("chat", ...)`).
 
 ### DataRegistry (`autoload/data_registry.gd`)
 Loads every file in `core/data_schema.gd::FILES` at startup, validates it, converts integer fields to
@@ -117,6 +136,7 @@ bot types exist, colour names exist in the palette). Errors are `push_error`ed a
 | `arenas() -> Array` (sorted by `order`), `arena(id)`, `first_arena_id()` | arenas.json |
 | `bot_stats(bot_id, arena_id) -> Dictionary` | bot stats × arena `bot_mults` |
 | `color(name) -> Color`, `palette() -> Dictionary` | palette.json |
+| `chat() -> Dictionary` | chat.json |
 | `get_file(stem) -> Variant` | raw access for files without a typed getter yet |
 | static `load_dir(dir)`, `load_file(path, spec, errors)`, `cross_validate(data, errors)`, `resolve_bot_stats(bot, arena)` | pure helpers used by tests |
 
