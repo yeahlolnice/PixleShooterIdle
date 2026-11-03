@@ -108,6 +108,12 @@ cheat/game values. Each player/weapon modifier key belongs to one cheat only.
 Server Slots' level is stored in `GameState.server_slots`; its `extra_bots` effect is added to
 `arenas.json bots_per_wave` by RoundController via `CheatSystem.extra_bots()`.
 
+### Wallhack (TASK-012, `cheats/wallhack.gd`)
+`radius_m` is the outline range around the player; `whole_map` (max level) makes it unlimited;
+`health_bars` shows a bar above outlined bots from that level. Bots in range get
+`shaders/wallhack_outline.gdshader` as `next_pass` on their part materials (neon from palette.json).
+The range check runs on a 0.2 s timer, not per frame.
+
 ## chat.json
 Every chat line and chat UI string. Read by the `ChatSystem` autoload.
 | Key | Type | Meaning |
