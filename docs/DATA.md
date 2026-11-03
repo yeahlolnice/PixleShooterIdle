@@ -107,9 +107,15 @@ Neutral (off/unowned) values: `false` for bools, `1.0` for player/weapon multipl
 cheat/game values. Each player/weapon modifier key belongs to one cheat only.
 Speed Hack, Infinite Ammo and Auto Bhop name scripts in `cheats/`. Auto Bhop's `cheat` effects
 (`hop_speed_gain`, `max_hop_speed_mult`, `uncapped`) are handed to `Player.set_bhop()` by its
-`apply()` and cleared by `remove()`; see DECISIONS D36–D37.
+`apply()` and cleared by `remove()`; see DECISIONS D37–D38.
 Server Slots' level is stored in `GameState.server_slots`; its `extra_bots` effect is added to
 `arenas.json bots_per_wave` by RoundController via `CheatSystem.extra_bots()`.
+
+### Wallhack (TASK-012, `cheats/wallhack.gd`)
+`radius_m` is the outline range around the player; `whole_map` (max level) makes it unlimited;
+`health_bars` shows a bar above outlined bots from that level. Bots in range get
+`shaders/wallhack_outline.gdshader` as `next_pass` on their part materials (neon from palette.json).
+The range check runs on a 0.2 s timer, not per frame.
 
 ## Coming in later tickets
 `chat.json` (TASK-013: triggers, channel, once flag, delay, lines with `{placeholders}`).
