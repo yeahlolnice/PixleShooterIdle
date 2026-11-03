@@ -25,6 +25,9 @@ const POP_TIME_S := 0.35
 ## Pop tweens shrink to this, not zero: a zero scale makes a singular basis ("det == 0" errors).
 const POP_END_SCALE := Vector3.ONE * 0.001
 const HEAD_SIZE := Vector3(0.5, 0.5, 0.5)
+const DEFAULT_BODY_SIZE := Vector3(0.7, 1.2, 0.4)
+const FACE_COLOR := "ui_bg"
+const CONFETTI := 10   ## death burst: confetti cubes on top of POP_PARTICLES coins
 
 ## Head hitbox size multiplier for every bot; only the Hitbox Expander cheat sets
 ## it. Static so bots spawned later pick it up too. The head mesh never changes.
@@ -172,16 +175,26 @@ func _die(headshot: bool, gun_id: String) -> void:
 func _pop() -> void:
 	var parent := get_parent()
 	if parent and is_inside_tree():
-		var mat := _material(stats.get("body_color", "bot_grunt"))
-		for i in POP_PARTICLES:
+		# Coin + confetti burst (TASK-029): gold coins, then random-hue confetti.
+		var coin_mat := _material("cash")
+		for i in POP_PARTICLES + CONFETTI:
+			var coin := i < POP_PARTICLES
 			var cube := MeshInstance3D.new()
+			cube.set_meta("pop", "coin" if coin else "confetti")   # names get deduped by the engine
 			var mesh := BoxMesh.new()
-			mesh.size = Vector3.ONE * 0.18
+			mesh.size = Vector3(0.2, 0.2, 0.05) if coin else Vector3.ONE * 0.08
 			cube.mesh = mesh
-			cube.material_override = mat
+			if coin:
+				cube.material_override = coin_mat
+			else:
+				var confetti := StandardMaterial3D.new()
+				confetti.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+				confetti.albedo_color = Color.from_hsv(_rng.randf(), 0.75, 1.0)
+				cube.material_override = confetti
 			parent.add_child(cube)
 			cube.global_position = global_position + Vector3(0, 1.0, 0)
-			var dir := Vector3(_rng.randf_range(-1, 1), _rng.randf_range(0.5, 1.5), _rng.randf_range(-1, 1))
+			var dir := Vector3(_rng.randf_range(-1, 1), _rng.randf_range(0.5, 1.5), _rng.randf_range(-1, 1)) * (1.0 if coin else 1.6)
+			cube.rotation = Vector3(_rng.randf() * TAU, _rng.randf() * TAU, 0.0)
 			var tw := cube.create_tween().set_parallel(true)
 			tw.tween_property(cube, "global_position", cube.global_position + dir * 1.2, POP_TIME_S)
 			tw.tween_property(cube, "scale", POP_END_SCALE, POP_TIME_S)
@@ -386,10 +399,46 @@ func _build_body() -> void:
 	shape.shape = capsule
 	shape.position = Vector3(0, 0.9, 0)
 	add_child(shape)
-	# Torso + legs share the body hitbox; the cube head has its own.
-	_add_part("Body", Vector3(0.7, 1.2, 0.4), Vector3(0, 0.6, 0), body_color, "body")
-	_head_shape = _add_part("Head", HEAD_SIZE, Vector3(0, 1.45, 0), head_color, "head")
+	# Torso + legs share the body hitbox; the cube head has its own. Body size is
+	# per type (bots.json body_size), so silhouettes differ and hitboxes match.
+	var body_size: Vector3 = stats.get("body_size", DEFAULT_BODY_SIZE)
+	_add_part("Body", body_size, Vector3(0, body_size.y * 0.5, 0), body_color, "body")
+	var head_y := body_size.y + HEAD_SIZE.y * 0.5
+	_head_shape = _add_part("Head", HEAD_SIZE, Vector3(0, head_y, 0), head_color, "head")
 	apply_head_hitbox_scale()
+	_add_face(head_y)
+
+
+## Eyes and mouth on the head's front (-Z, the way the bot faces), plus a
+## per-behaviour accessory: sniper cap, rusher headband (TASK-029). Visual only.
+func _add_face(head_y: float) -> void:
+	var front := -HEAD_SIZE.z * 0.5 - 0.01
+	var dark := FACE_COLOR
+	_add_deco("EyeL", Vector3(0.09, 0.09, 0.02), Vector3(-0.11, head_y + 0.06, front), dark)
+	_add_deco("EyeR", Vector3(0.09, 0.09, 0.02), Vector3(0.11, head_y + 0.06, front), dark)
+	_add_deco("Mouth", Vector3(0.2, 0.04, 0.02), Vector3(0, head_y - 0.1, front), dark)
+	var top := head_y + HEAD_SIZE.y * 0.5
+	match behaviour():
+		"sniper":
+			_add_deco("Cap", Vector3(0.54, 0.09, 0.54), Vector3(0, top + 0.04, 0), String(stats.get("body_color", "bot_sniper")), 0.35)
+			_add_deco("CapBrim", Vector3(0.5, 0.03, 0.18), Vector3(0, top + 0.01, -0.33), String(stats.get("body_color", "bot_sniper")), 0.35)
+		"rusher":
+			_add_deco("Headband", Vector3(0.53, 0.08, 0.53), Vector3(0, head_y + 0.15, 0), "danger")
+
+
+## A visual-only box (no hitbox). `darken` 0..1 shades the palette colour.
+func _add_deco(part_name: String, size: Vector3, pos: Vector3, color_name: String, darken: float = 0.0) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	mi.name = part_name
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	mi.mesh = mesh
+	var mat := _material(color_name)
+	mat.albedo_color = mat.albedo_color.darkened(darken)
+	mi.material_override = mat
+	mi.position = pos
+	add_child(mi)
+	return mi
 
 
 ## Resizes the head hitbox to HEAD_SIZE * head_hitbox_scale (Hitbox Expander).

@@ -60,6 +60,31 @@ func _run() -> void:
 		await _snap("buy_menu_servers")
 		buy.close_menu()
 
+	# Close-up lineup of every bot type (art pass), then one pops.
+	var lineup: Array = []
+	var cam: Camera3D = _main.player.camera
+	var fwd := -cam.global_transform.basis.z
+	fwd.y = 0.0
+	fwd = fwd.normalized()
+	var right := fwd.cross(Vector3.UP)
+	var types := DataRegistry.bots().map(func(b): return b["id"])
+	for i in types.size():
+		var b: Bot = load("res://shooter/bots/bot.tscn").instantiate()
+		b.configure(types[i], DataRegistry.first_arena_id(), _main.player)
+		_main.add_child(b)
+		b.set_physics_process(false)
+		b.global_position = _main.player.global_position + fwd * 3.5 + right * (float(i) - (types.size() - 1) * 0.5) * 1.3
+		b.look_at(_main.player.global_position, Vector3.UP)
+		b.rotation.x = 0.0
+		lineup.append(b)
+	await _snap("bot_lineup")
+	lineup[0].take_hit("head", 100000.0)
+	await _settle(6)
+	await _snap("bot_pop")
+	for b in lineup:
+		if is_instance_valid(b):
+			b.queue_free()
+
 	var mod := _ui(ModMenu) as ModMenu
 	mod.open_menu()
 	await _snap("mod_menu")

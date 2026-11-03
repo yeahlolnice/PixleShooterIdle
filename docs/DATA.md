@@ -79,6 +79,7 @@ Optional behaviour fields (TASK-025): `behaviour` (`grunt` default, `sniper`, `r
 `shoot_range_ratio` (0–1 of sight range where it stops to shoot; default 0.7), `keep_distance_m` (sniper backs
 off inside this), `wander_radius_m` (default 8; snipers stay near their perch), `strafe_speed` (m/s, scaled by
 the arena move_speed mult) and `strafe_switch_s` (rusher flips direction about this often, jittered ±40%).
+`body_size` (optional vec3, default [0.7, 1.2, 0.4]): torso box and its hitbox; the head sits on top (TASK-029).
 
 ## arenas.json
 ```json

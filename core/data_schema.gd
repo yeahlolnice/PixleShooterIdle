@@ -83,10 +83,11 @@ const _BOT := {
 		"wander_radius_m": _NUM_NONNEG,
 		"strafe_speed": _NUM_NONNEG,
 		"strafe_switch_s": _NUM_POS,
+		"body_size": {"type": "vec3"},
 		"body_color": {"type": "string"},
 		"head_color": {"type": "string"},
 	},
-	"optional": ["behaviour", "shoot_range_ratio", "keep_distance_m", "wander_radius_m", "strafe_speed", "strafe_switch_s"],
+	"optional": ["behaviour", "shoot_range_ratio", "keep_distance_m", "wander_radius_m", "strafe_speed", "strafe_switch_s", "body_size"],
 }
 
 const _BLOCK := {

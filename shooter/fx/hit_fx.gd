@@ -7,8 +7,9 @@ extends Node3D
 const RISE_M := 0.9
 const LIFE_S := 0.7
 const CASH_LIFE_S := 1.1
-const DAMAGE_PIXEL := 0.012
-const CASH_PIXEL := 0.016
+## Screen-constant sizes (fixed_size labels), so pop-ups read the same near and far.
+const DAMAGE_PIXEL := 0.0016
+const CASH_PIXEL := 0.0022
 const HEAD_HEIGHT := Vector3(0, 1.9, 0)
 const CASH_HEIGHT := Vector3(0, 2.3, 0)
 
@@ -39,7 +40,7 @@ func spawn_label(text: String, at: Vector3, color: Color, pixel: float, life: fl
 	l.pixel_size = pixel
 	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	l.no_depth_test = true
-	l.fixed_size = false
+	l.fixed_size = true
 	add_child(l)
 	l.global_position = at
 	var tw := l.create_tween().set_parallel(true)
