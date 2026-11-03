@@ -24,6 +24,43 @@ under 2 minutes.
 - ...
 -->
 
+## Build 2026-11-03 — Phase 2.5 Stabilise (TASK-016..021) — GATE 2 re-check: "Do cheats feel good?"
+
+**What changed**
+- All 12 cheats now work (previous two commits: Aimbot, Triggerbot, Spinbot, Hitbox Expander, God Mode,
+  Noclip on **V**, Loot Magnet + bonus loot drops; CS-style bhop; recoil that moves your aim; Server
+  Slots fixed; Wallhack round-end crash fixed).
+- `--dev-unlock-all` (debug builds only): every cheat buyable, 1e9 cash, save never touched. Dev flags
+  no longer work in release exports (D50). Test values no longer need editing into `cheats.json`.
+- Big numbers everywhere: `$964.7M`, `$2.2K` (HUD, summary, buy menu, mod menu).
+- **Esc** pause menu (Resume / Settings soon / Quit, which saves). Esc closes the buy or mod menu first.
+- Top-right HUD list of switched-on cheats, with live God Mode time and Noclip fuel / FLYING.
+- Fixed: "AMMO ∞" at round start (Gate 1 known issue); `det == 0` engine errors when bots pop.
+- QA: `tools/screenshot_tour.sh` runs a windowed tour and saves 8 screenshots to `build/screens/`
+  (the first windowed check this project has had). 200 GUT tests pass; smoke boot no longer reads your save.
+
+**How to get it**
+- From source: `godot --path . -- --dev-unlock-all` (or plain `godot --path .` for the real path).
+
+**Test it in under 2 minutes**
+1. Run with `--dev-unlock-all`. Insert → buy every cheat once (God Mode, Spinbot, Noclip included).
+2. Wait for the round to go live. Watch Aimbot/Triggerbot/Spinbot kill, loot cubes fly to you, outlines through walls.
+3. Press **V** to fly, look at a wall and fly through it; watch the fuel tick down top right.
+4. Get shot right after a kill: God Mode timer shows in the top-right list.
+5. Esc → pause; Esc again → resume. Open the mod menu and press Esc: it closes.
+
+**Feedback we need**
+- Gate 2 sign-off: do the cheats feel good, and does each upgrade level feel different?
+- Spinbot snaps the view to targets but does not spin the camera between shots. Keep it that way, or do you want a visible spin?
+- Loot: drops are bonus cash (50% chance, 50% of the kill reward). Is that worth chasing without Loot Magnet?
+- Noclip: V toggle with a per-round fuel budget. Toggle or hold?
+
+**Known issues**
+- Mods (anti-cheat bots), prestige, Rootkit and arenas 2–4 are not built yet (Phase 3–4; see docs/BUILD_PLAN.md).
+  God Mode / Spinbot / Noclip are only reachable with `--dev-unlock-all` until prestige exists.
+- Settings button in the pause menu is disabled until TASK-044.
+- The chat box floods when many cheats are bought at once (one seller DM per purchase).
+
 ## Build 2026-11-03 — Phase 2 Cheat core (TASK-008..014) — GATE: "Do cheats feel good?"
 
 **What changed**

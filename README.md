@@ -15,10 +15,13 @@ godot --path .                  # play from source
 godot --path . -e               # open the editor
 tools/export.sh linux           # -> build/linux/CheatCodeIdle.x86_64
 tools/export.sh windows         # -> build/windows/CheatCodeIdle.exe
+tools/screenshot_tour.sh        # windowed tour of menus + every cheat -> build/screens/*.png
+godot --path . -- --dev-unlock-all   # QA: every cheat unlocked, 1e9 cash, save untouched (debug only)
 ```
 On Windows/macOS install Godot 4.7.2 from godotengine.org, open `project.godot`, and press F5.
 `tools/install_godot.sh --no-templates` skips the ~1.2 GB templates if you only need to run tests.
-Set `GODOT=/path/to/godot` to use a different binary with the scripts.
+Set `GODOT=/path/to/godot` to use a different binary with the scripts (on Windows the scripts run in
+Git Bash; point `GODOT` at the `_console.exe` build so output reaches the terminal).
 
 ## Controls (rebindable)
 WASD move · Space or mouse wheel jump · V noclip (with the cheat) · LMB fire · R reload · B buy menu (freeze time) · Insert/F1 mod menu ·

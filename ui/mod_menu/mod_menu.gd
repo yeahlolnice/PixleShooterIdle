@@ -16,7 +16,6 @@ const MENU_ID := &"mod_menu"
 const PANEL_SIZE := Vector2(720, 460)
 ## Cosmetic length of the fake injector bar (real seconds, ignores time scale).
 const INJECT_SECONDS := 1.2
-const NUMBER_SUFFIXES := ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"]
 
 var _tabs: TabContainer
 var _cash_label: Label
@@ -302,18 +301,6 @@ static func requirement_text(cheat: CheatBase) -> String:
 	return "needs %s kills" % short_number(float(req["kills"]))
 
 
-## Short display: 950, 1.2K, 3.4M, ... (one decimal, rounded down, above 1000).
+## Short display: 950, 1.2K, 3.4M, ... (see core/fmt.gd).
 static func short_number(value: float) -> String:
-	var v := absf(value)
-	var prefix := "-" if value < 0.0 else ""
-	if v < 1000.0:
-		return prefix + str(int(floor(v)))
-	var tier := 0
-	while v >= 1000.0 and tier < NUMBER_SUFFIXES.size() - 1:
-		v /= 1000.0
-		tier += 1
-	# Floor to one decimal so cash is never shown higher than it is.
-	var text := "%.1f" % (floor(v * 10.0 + 0.000001) / 10.0)
-	if text.ends_with(".0"):
-		text = text.left(-2)
-	return prefix + text + NUMBER_SUFFIXES[tier]
+	return Fmt.number(value)

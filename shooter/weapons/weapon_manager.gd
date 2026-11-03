@@ -15,7 +15,7 @@ var _can_shoot := true
 
 func _ready() -> void:
 	EventBus.menu_toggled.connect(_on_menu_toggled)
-	EventBus.round_state_changed.connect(func(state, _info): _can_shoot = state == EventBus.ROUND_LIVE)
+	EventBus.round_state_changed.connect(_on_round_state)
 	EventBus.player_died.connect(func(_info): equip_starter())
 	equip(GameState.equipped_gun_id)
 
@@ -37,6 +37,13 @@ func equip(gun_id: String) -> String:
 	weapon.setup(def)
 	EventBus.gun_equipped.emit(def["id"])
 	return def["id"]
+
+
+func _on_round_state(state: StringName, _info: Dictionary) -> void:
+	_can_shoot = state == EventBus.ROUND_LIVE
+	# The gun announced its ammo in equip(), before the HUD existed on first boot.
+	if weapon:
+		EventBus.ammo_changed.emit(weapon.ammo, weapon.mag_size())
 
 
 func _on_menu_toggled(menu_id: StringName, open: bool) -> void:

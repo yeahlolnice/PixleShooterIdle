@@ -127,7 +127,7 @@ func test_unlock_buy_effect_save_reload() -> void:
 func test_mod_menu_restores_time_scale() -> void:
 	var menu: Node = null
 	for n in main.get_node("UI").get_children():
-		if n.has_method("open_menu"):
+		if n is ModMenu:
 			menu = n
 	assert_not_null(menu, "mod menu is in the UI layer")
 	Engine.time_scale = 1.0

@@ -16,6 +16,8 @@ const TARGET_AIM_HEIGHT := 1.1   ## where bots aim on the player (chest)
 const TRACER_LIFETIME_S := 0.12
 const POP_PARTICLES := 8
 const POP_TIME_S := 0.35
+## Pop tweens shrink to this, not zero: a zero scale makes a singular basis ("det == 0" errors).
+const POP_END_SCALE := Vector3.ONE * 0.001
 const HEAD_SIZE := Vector3(0.5, 0.5, 0.5)
 
 ## Head hitbox size multiplier for every bot; only the Hitbox Expander cheat sets
@@ -174,10 +176,10 @@ func _pop() -> void:
 			var dir := Vector3(_rng.randf_range(-1, 1), _rng.randf_range(0.5, 1.5), _rng.randf_range(-1, 1))
 			var tw := cube.create_tween().set_parallel(true)
 			tw.tween_property(cube, "global_position", cube.global_position + dir * 1.2, POP_TIME_S)
-			tw.tween_property(cube, "scale", Vector3.ZERO, POP_TIME_S)
+			tw.tween_property(cube, "scale", POP_END_SCALE, POP_TIME_S)
 			tw.chain().tween_callback(cube.queue_free)
 	var tween := create_tween()
-	tween.tween_property(self, "scale", Vector3.ZERO, POP_TIME_S)
+	tween.tween_property(self, "scale", POP_END_SCALE, POP_TIME_S)
 	tween.tween_callback(queue_free)
 
 

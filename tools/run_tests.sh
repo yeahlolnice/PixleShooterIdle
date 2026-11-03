@@ -33,10 +33,11 @@ if grep -qE "$FATAL_PATTERN" "$LOG_DIR/gut.log"; then
   echo "run_tests: script errors in GUT log:" >&2; grep -E "$FATAL_PATTERN" "$LOG_DIR/gut.log" >&2; exit 1
 fi
 
-# 3) Smoke: boot the main scene for 120 frames with Steam absent.
+# 3) Smoke: boot the main scene for 120 frames with Steam absent. --dev-unlock-all keeps the
+#    real save file out of it (never read or written) and loads every cheat.
 if [[ $SMOKE -eq 1 ]]; then
   echo "run_tests: smoke-booting main scene"
-  "$GODOT" --headless --path "$ROOT" --quit-after 120 >"$LOG_DIR/smoke.log" 2>&1
+  "$GODOT" --headless --path "$ROOT" --quit-after 120 -- --dev-unlock-all >"$LOG_DIR/smoke.log" 2>&1
   SMOKE_STATUS=$?
   cat "$LOG_DIR/smoke.log"
   if [[ $SMOKE_STATUS -ne 0 ]] || grep -qE "$FATAL_PATTERN|^ERROR:" "$LOG_DIR/smoke.log"; then

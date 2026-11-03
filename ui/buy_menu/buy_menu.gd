@@ -60,7 +60,7 @@ func _build_buttons() -> void:
 
 static func _label(g: Dictionary, index: int) -> String:
 	var dps := float(g["damage"]) * float(g["fire_rate"])
-	return "[%d] %s\n$%d\n%d dmg · %.0f dps · %d rnd" % [index, g["name"], int(g["price"]), int(g["damage"]), dps, int(g["mag_size"])]
+	return "[%d] %s\n%s\n%d dmg · %.0f dps · %d rnd" % [index, g["name"], Fmt.cash(float(g["price"])), int(g["damage"]), dps, int(g["mag_size"])]
 
 
 func is_open() -> bool:
@@ -118,7 +118,7 @@ func _buy(gun_id: String) -> void:
 func _refresh() -> void:
 	if _cash_label == null:
 		return
-	_cash_label.text = "Cash: $%d" % int(GameState.cash)
+	_cash_label.text = "Cash: " + Fmt.cash(GameState.cash)
 	for id in _buttons:
 		var b: Button = _buttons[id]
 		var r := ShopService.check(id)

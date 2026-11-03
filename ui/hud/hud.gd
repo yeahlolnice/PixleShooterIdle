@@ -27,6 +27,7 @@ func _ready() -> void:
 	set_ammo(0, 0)
 	summary_panel.hide()
 	freeze_label.hide()
+	_add_cheat_strip()
 	_refresh_cash()
 	EventBus.cash_changed.connect(_on_cash_changed)
 	EventBus.ammo_changed.connect(set_ammo)
@@ -35,6 +36,19 @@ func _ready() -> void:
 	EventBus.round_state_changed.connect(_on_round_state)
 	EventBus.round_summary.connect(_on_round_summary)
 	EventBus.game_state_loaded.connect(_on_loaded)
+
+
+## Active-cheat list in the top-right corner, under the round timer.
+func _add_cheat_strip() -> void:
+	var strip := CheatStrip.new()
+	strip.name = "CheatStrip"
+	strip.anchor_left = 1.0
+	strip.anchor_right = 1.0
+	strip.offset_left = -320.0
+	strip.offset_right = -16.0
+	strip.offset_top = 64.0   # below the round timer
+	strip.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	add_child(strip)
 
 
 func _process(delta: float) -> void:
@@ -57,7 +71,7 @@ func set_ammo(in_mag: int, mag_size: int) -> void:
 
 
 func _refresh_cash() -> void:
-	cash_label.text = "$%d" % roundi(_cash_shown)
+	cash_label.text = Fmt.cash(roundf(_cash_shown))
 
 
 func _refresh_timer() -> void:
@@ -97,6 +111,6 @@ func _on_round_state(state: StringName, info: Dictionary) -> void:
 
 
 func _on_round_summary(s: Dictionary) -> void:
-	summary_label.text = "ROUND %d COMPLETE\nKills: %d\nHeadshots: %d\nBest streak: %d\nCash earned: $%d\nDeaths: %d" % [
+	summary_label.text = "ROUND %d COMPLETE\nKills: %d\nHeadshots: %d\nBest streak: %d\nCash earned: %s\nDeaths: %d" % [
 		s.get("round", 0), s.get("kills", 0), s.get("headshots", 0),
-		s.get("best_streak", 0), roundi(float(s.get("cash", 0.0))), s.get("deaths", 0)]
+		s.get("best_streak", 0), Fmt.cash(float(s.get("cash", 0.0))), s.get("deaths", 0)]
