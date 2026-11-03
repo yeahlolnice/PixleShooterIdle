@@ -36,6 +36,9 @@ signal gun_equipped(gun_id: String)
 ## Round state machine moved. state is one of ROUND_*.
 ## info: {round: int, duration: float (seconds, 0 if open-ended)}
 signal round_state_changed(state: StringName, info: Dictionary)
+## A round ended. summary: MatchTracker.end_round() dictionary
+## {round, kills, headshots, best_streak, cash, duration_s, deaths}.
+signal round_summary(summary: Dictionary)
 
 # --- Economy / progression ----------------------------------------------------
 ## GameState cash changed. delta is negative for spending.
