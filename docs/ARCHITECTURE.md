@@ -27,7 +27,8 @@ shooter/             everything in the 3D world
   weapons/             weapon.gd, weapon_manager.gd  (TASK-004)
   bots/                bot.gd, bot_spawner.gd  (TASK-003)
   arenas/              arena.tscn + arena_builder.gd
-ui/                  hud/ buy_menu/ mod_menu/ chat/ theme/   (TASK-005/006/010/013)
+ui/                  hud/ buy_menu/ mod_menu/ chat/ pause_menu/ theme/   (TASK-005/006/010/013/020)
+audio/               sfx_synth.gd (procedural sounds), sfx_player.gd (EventBus -> sounds, SFX bus)  (TASK-028)
 shaders/             wallhack outline etc. (must compile on Compatibility renderer)
 scenes/main.tscn     composition root (main.gd)
 data/                every balance/content number (JSON)
@@ -83,7 +84,8 @@ Signals only (plus `emit_chat_event`). Emitter column = the only code that shoul
 | `gun_upgraded` | `gun_id: String, stat: String, level: int` | ShopService.buy_upgrade | WeaponManager (re-applies), buy menu |
 | `arena_selected` | `arena_id: String` | ArenaService.select | Main (rebuilds the world, restarts rounds), buy menu |
 | `kill_rewarded` | `cash: float, info: Dictionary` (bot_killed payload) | MatchTracker | HUD kill feed + hit marker, HitFx "+$" pop-up |
-| `scope_changed` | `scoped: bool` | WeaponManager.set_aiming | HUD scope overlay |
+| `scope_changed` | `scoped: bool` | WeaponManager.set_aiming | HUD scope overlay, audio |
+| `loot_collected` | `value: float` | LootPickup.collect | audio |
 | `round_state_changed` | `state: StringName, info: {round: int, duration: float}` | RoundController | spawner, buy menu, HUD, ChatSystem |
 | `cash_changed` | `total: float, delta: float` | GameState only | HUD, mod/buy menus, ChatSystem (first_cash) |
 | `kills_changed` | `kills: int, lifetime_kills: int` | GameState only | CheatSystem (unlocks), HUD |

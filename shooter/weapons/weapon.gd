@@ -56,6 +56,7 @@ var _flash_left: float = 0.0
 var _rng := RandomNumberGenerator.new()
 var _flash: MeshInstance3D
 var _sound: AudioStreamPlayer
+var _reload_sound: AudioStreamPlayer
 
 
 func setup(gun_def: Dictionary) -> void:
@@ -190,6 +191,8 @@ func start_reload() -> bool:
 	state = State.RELOADING
 	_reload_left = reload_time()
 	reload_started.emit()
+	if _reload_sound and _reload_sound.is_inside_tree():
+		_reload_sound.play()
 	if _reload_left <= 0.0:
 		_finish_reload()
 	return true
@@ -322,9 +325,16 @@ func _build_viewmodel() -> void:
 		_add_box(Vector3(0.05, 0.06, 0.22), Vector3(0, thick * 0.5 + 0.04, 0.0), dark)    # scope
 	_flash = _add_box(Vector3(0.1, 0.1, 0.08), Vector3(0, 0, 0.15 - length - 0.04), Color(1, 0.9, 0.4), true)
 	_flash.visible = false
+	SfxPlayer.ensure_bus()
 	_sound = AudioStreamPlayer.new()
-	_sound.stream = _make_shot_sound()
+	_sound.stream = SfxSynth.shot(category())   # TASK-028: one sound per gun class
+	_sound.bus = SfxPlayer.BUS
+	_sound.max_polyphony = 4   # auto fire overlaps instead of cutting off
 	add_child(_sound)
+	_reload_sound = AudioStreamPlayer.new()
+	_reload_sound.stream = SfxSynth.get_sound("reload")
+	_reload_sound.bus = SfxPlayer.BUS
+	add_child(_reload_sound)
 
 
 func _add_box(size: Vector3, pos: Vector3, color: Color, emissive: bool = false) -> MeshInstance3D:
@@ -341,21 +351,3 @@ func _add_box(size: Vector3, pos: Vector3, color: Color, emissive: bool = false)
 	add_child(node)
 	return node
 
-
-## Short decaying noise burst, pitched by fire rate so guns sound distinct.
-func _make_shot_sound() -> AudioStreamWAV:
-	var rate := 22050
-	var count := int(rate * 0.12)
-	var bytes := PackedByteArray()
-	bytes.resize(count * 2)
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 1
-	for i in count:
-		var env := pow(1.0 - float(i) / count, 3.0)
-		var s := (rng.randf() * 2.0 - 1.0) * env * 0.6
-		bytes.encode_s16(i * 2, int(s * 32767.0))
-	var wav := AudioStreamWAV.new()
-	wav.format = AudioStreamWAV.FORMAT_16_BITS
-	wav.mix_rate = rate
-	wav.data = bytes
-	return wav

@@ -57,6 +57,9 @@ func _ready() -> void:
 	var fx := HitFx.new()
 	fx.name = "HitFx"
 	add_child(fx)
+	var sfx := SfxPlayer.new()
+	sfx.name = "Sfx"
+	add_child(sfx)
 	ui_layer.add_child(load("res://ui/hud/hud.tscn").instantiate())
 	# Chat before the menus so open menus draw on top of it.
 	ui_layer.add_child(load("res://ui/chat/chat_box.tscn").instantiate())

@@ -60,6 +60,7 @@ func collect() -> void:
 	if is_queued_for_deletion():
 		return
 	GameState.add_cash(value)
+	EventBus.loot_collected.emit(value)
 	queue_free()
 
 
