@@ -6,7 +6,7 @@ var main: Node3D
 
 func before_each() -> void:
 	GameState.new_game()
-	main = add_child_autofree(load("res://scenes/main.tscn").instantiate())
+	main = add_child_autofree(_make_main())
 	await wait_physics_frames(3)
 
 
@@ -65,3 +65,9 @@ func test_kill_pays_expected_cash_then_death_resets_gun() -> void:
 	assert_eq(GameState.equipped_gun_id, DataRegistry.starter_gun_id())
 	assert_eq(main.tracker.streak, 0)
 	assert_almost_eq(GameState.cash, cash_after, 0.001, "death keeps cash")
+
+
+func _make_main() -> Node3D:
+	var m: Node3D = load("res://scenes/main.tscn").instantiate()
+	m.use_save_file = false
+	return m

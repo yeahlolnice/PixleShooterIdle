@@ -27,7 +27,8 @@ var spawn_points: Array[Vector3] = []
 var input_enabled := true
 
 var _pitch := 0.0
-var _menu_open := false
+## Ids of menus currently open (menu_toggled is per menu; input stays off while any is open).
+var _open_menus: Dictionary = {}
 var _respawn_timer := 0.0
 var _spawn_index := 0
 
@@ -78,7 +79,7 @@ func effective(stat: StringName) -> float:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		look(event.relative)
-	elif event is InputEventMouseButton and event.pressed and not _menu_open and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+	elif event is InputEventMouseButton and event.pressed and _open_menus.is_empty() and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
@@ -176,8 +177,17 @@ func _clamp_health() -> void:
 	health_changed.emit(health, max_hp)
 
 
-func _on_menu_toggled(_menu_id: StringName, open: bool) -> void:
-	_menu_open = open
-	input_enabled = not open
+func _on_menu_toggled(menu_id: StringName, open: bool) -> void:
+	if open:
+		_open_menus[menu_id] = true
+	else:
+		_open_menus.erase(menu_id)
+	var any_open := is_menu_open()
+	input_enabled = not any_open
 	if DisplayServer.get_name() != "headless":
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if open else Input.MOUSE_MODE_CAPTURED
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if any_open else Input.MOUSE_MODE_CAPTURED
+
+
+## True while at least one menu (buy menu, mod menu, ...) is open.
+func is_menu_open() -> bool:
+	return not _open_menus.is_empty()

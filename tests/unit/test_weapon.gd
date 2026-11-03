@@ -129,3 +129,16 @@ func test_raycast_hits_headshot_hitbox() -> void:
 	w.try_fire()
 	assert_eq(target.last_damage, 50.0)
 	assert_true(target.last_info["headshot"])
+
+
+# TASK-015: firing stays blocked until every open menu has closed.
+func test_manager_tracks_menus_per_id() -> void:
+	var m := WeaponManager.new()
+	m.mount_path = ^""
+	add_child_autofree(m)
+	EventBus.menu_toggled.emit(&"buy_menu", true)
+	EventBus.menu_toggled.emit(&"mod_menu", true)
+	EventBus.menu_toggled.emit(&"mod_menu", false)
+	assert_true(m.is_menu_open())
+	EventBus.menu_toggled.emit(&"buy_menu", false)
+	assert_false(m.is_menu_open())
