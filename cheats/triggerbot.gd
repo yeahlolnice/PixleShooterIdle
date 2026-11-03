@@ -19,4 +19,5 @@ func drive(player: Node, driver: DriverCheat.Driver, delta: float) -> void:
 		driver.state = {"bot": bot, "on_target_s": 0.0}
 	driver.state["on_target_s"] += delta
 	if driver.state["on_target_s"] >= float(driver.settings.get("delay_s", 0.0)):
-		manager.cheat_fire()
+		if manager.cheat_fire():
+			EventBus.cheat_fired.emit(id)

@@ -23,4 +23,5 @@ func drive(player: Node, driver: DriverCheat.Driver, delta: float) -> void:
 		return
 	player.aim_at(target["head"], 1.0)
 	if manager.cheat_fire():
+		EventBus.cheat_fired.emit(id)
 		driver.state["wait_s"] = float(driver.settings.get("spin_interval_s", 0.0))

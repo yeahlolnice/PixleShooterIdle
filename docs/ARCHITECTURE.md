@@ -86,6 +86,7 @@ Signals only (plus `emit_chat_event`). Emitter column = the only code that shoul
 | `kill_rewarded` | `cash: float, info: Dictionary` (bot_killed payload) | MatchTracker | HUD kill feed + hit marker, HitFx "+$" pop-up |
 | `scope_changed` | `scoped: bool` | WeaponManager.set_aiming | HUD scope overlay, audio |
 | `loot_collected` | `value: float` | LootPickup.collect | audio |
+| `cheat_fired` | `cheat_id: String` | Triggerbot, Spinbot (after a shot) | HUD CheatFx (crosshair flash, whip streak) |
 | `round_state_changed` | `state: StringName, info: {round: int, duration: float}` | RoundController | spawner, buy menu, HUD, ChatSystem |
 | `cash_changed` | `total: float, delta: float` | GameState only | HUD, mod/buy menus, ChatSystem (first_cash) |
 | `kills_changed` | `kills: int, lifetime_kills: int` | GameState only | CheatSystem (unlocks), HUD |

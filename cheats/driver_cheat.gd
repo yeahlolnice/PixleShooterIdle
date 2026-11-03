@@ -43,6 +43,11 @@ func drive(_player: Node, _driver: Driver, _delta: float) -> void:
 	pass
 
 
+## Called instead of drive() on ticks where the cheat may not act (dead, menu open).
+func idle(_driver: Driver) -> void:
+	pass
+
+
 ## The player's WeaponManager (fires through the same gates as the mouse), or null.
 static func weapon_manager_of(player: Node) -> Node:
 	return player.get_node_or_null("WeaponManager")
@@ -64,3 +69,5 @@ class Driver:
 		var player := get_parent()
 		if cheat and CheatTargeting.can_act(player):
 			cheat.drive(player, self, delta)
+		elif cheat:
+			cheat.idle(self)

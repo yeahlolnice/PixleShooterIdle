@@ -11,11 +11,15 @@ const SIZE := 0.3
 const COLOR := "cash"
 ## Distance is measured to this point above the player's feet (capsule centre).
 const PLAYER_CENTER := Vector3(0, 0.9, 0)
+## Cheat whose ESP shows the price tag.
+const ESP_CHEAT := "loot_magnet"
 
 var value := 0.0
 var pickup_radius := 1.0
 var life_left := 0.0
 var _player: Node3D
+## Floating "$12" tag, visible while ESP_CHEAT is on.
+var tag: Label3D
 
 
 ## Call before add_child. `rules` = DataRegistry.economy()["loot"].
@@ -36,6 +40,18 @@ func _ready() -> void:
 	var mi := MeshInstance3D.new()
 	mi.mesh = mesh
 	add_child(mi)
+	# ESP price tag (TASK-030): shown while Loot Magnet is on.
+	tag = Label3D.new()
+	tag.text = Fmt.cash(value)
+	tag.modulate = DataRegistry.color(COLOR)
+	tag.outline_size = 8
+	tag.font_size = 40
+	tag.pixel_size = 0.01
+	tag.position = Vector3(0, 0.45, 0)
+	tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	tag.no_depth_test = true
+	tag.visible = false
+	add_child(tag)
 
 
 func _physics_process(delta: float) -> void:
@@ -47,6 +63,8 @@ func tick(delta: float) -> void:
 	if is_queued_for_deletion():
 		return
 	rotate_y(deg_to_rad(SPIN_DEG_S) * delta)
+	if tag:
+		tag.visible = CheatSystem.is_enabled(ESP_CHEAT)
 	life_left -= delta
 	if life_left <= 0.0:
 		queue_free()

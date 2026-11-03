@@ -28,6 +28,9 @@ func _ready() -> void:
 	summary_panel.hide()
 	freeze_label.hide()
 	_add_cheat_strip()
+	var cheat_fx := CheatFx.new()
+	cheat_fx.name = "CheatFx"
+	add_child(cheat_fx)
 	var feedback := HudFeedback.new()
 	feedback.name = "Feedback"
 	add_child(feedback)

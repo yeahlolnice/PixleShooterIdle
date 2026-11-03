@@ -50,6 +50,8 @@ signal cash_changed(total: float, delta: float)
 ## MatchTracker paid `cash` for a bot kill; info is the bot_killed payload
 ## (position, headshot, bot_type, gun_id). Juice: kill feed, +$ pop-ups.
 signal kill_rewarded(cash: float, info: Dictionary)
+## Triggerbot / Spinbot just fired a shot for the player (HUD flash / streak).
+signal cheat_fired(cheat_id: String)
 ## A loot pickup paid out (LootPickup.collect). Audio, juice.
 signal loot_collected(value: float)
 ## Scope view on/off (WeaponManager); HUD draws the scope overlay.
