@@ -11,9 +11,9 @@ const SAVE_VERSION := 1
 
 ## Spendable cash. Resets on prestige.
 var cash: float = 0.0
-## Kills in the current run (since the last prestige). Drives cheat unlocks.
+## Kills in the current run (since the last prestige).
 var kills: int = 0
-## Kills ever. Drives Hax Points; never resets.
+## Kills ever. Drives cheat unlocks and Hax Points; never resets.
 var lifetime_kills: int = 0
 ## Guns bought and still held (the free starter gun is never listed). Cleared on death.
 var owned_guns: Array[String] = []
@@ -23,7 +23,7 @@ var equipped_gun_id: String = ""
 var cheat_levels: Dictionary = {}
 ## cheat_id -> bool, whether an owned cheat is switched on. (TASK-009)
 var cheat_enabled: Dictionary = {}
-## Extra bots per wave bought in the mod menu. Resets on prestige. (TASK-009)
+## Server Slots upgrade level (cheats.json upgrades). Resets on prestige. (TASK-009)
 var server_slots: int = 0
 ## Number of times the player got banned. (Phase 4)
 var prestige_count: int = 0
