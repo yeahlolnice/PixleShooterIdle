@@ -96,7 +96,8 @@ func record_death() -> void:
 
 
 func _on_bot_killed(_bot: Node, info: Dictionary) -> void:
-	record_kill(bool(info.get("headshot", false)), String(info.get("bot_type", "")))
+	var cash := record_kill(bool(info.get("headshot", false)), String(info.get("bot_type", "")))
+	EventBus.kill_rewarded.emit(cash, info)
 
 
 func _on_player_died(_info: Dictionary) -> void:

@@ -36,7 +36,8 @@ section here. Files without a schema still load (raw, via `DataRegistry.get_file
 `max_health`, `move_speed` (m/s), `ground_accel`, `ground_friction` (m/s²), `air_accel` (Source
 sv_airaccelerate, ~12), `air_speed_cap` (m/s; in-air speed cap along the wish direction, CS 30 u ≈ 0.72),
 `jump_velocity` (m/s), `gravity` (m/s²), `mouse_sensitivity` (degrees per mouse pixel),
-`pitch_limit_deg` (0–90), `respawn_delay_s`.
+`pitch_limit_deg` (0–90), `respawn_delay_s`. Optional `shake` (TASK-027): `on_hit` / `on_fire` (metres of camera view
+offset added per hit taken / shot fired), `max`, `decay_per_s`; the player's `shake_scale` (settings, TASK-044) scales it.
 
 ## guns.json
 ```json

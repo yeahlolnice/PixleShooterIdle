@@ -10,6 +10,7 @@
   "mouse_sensitivity": 0.12,
   "pitch_limit_deg": 89,
   "respawn_delay_s": 3.0,
+  "shake": {"on_hit": 0.12, "on_fire": 0.012, "max": 0.25, "decay_per_s": 1.2},
   "fall_kill_y": -20.0,
   "nav": {
     "agent_radius": 0.5,

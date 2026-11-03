@@ -61,6 +61,7 @@ func apply_upgrades() -> void:
 ## Scopes in or out. Only guns with zoom_fov zoom; others just stay unscoped.
 func set_aiming(on: bool) -> void:
 	var scope := on and weapon != null and weapon.zoom_fov() > 0.0
+	var was_scoped := weapon != null and weapon.scoped
 	_aiming = on
 	if weapon:
 		weapon.scoped = scope
@@ -70,6 +71,8 @@ func set_aiming(on: bool) -> void:
 	var p := get_parent()
 	if p and "look_scale" in p:
 		p.look_scale = (weapon.zoom_fov() / _base_fov) if scope and _base_fov > 0.0 else 1.0
+	if scope != was_scoped:
+		EventBus.scope_changed.emit(scope)
 
 
 func is_scoped() -> bool:

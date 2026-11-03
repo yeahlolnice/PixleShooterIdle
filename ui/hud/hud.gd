@@ -28,6 +28,9 @@ func _ready() -> void:
 	summary_panel.hide()
 	freeze_label.hide()
 	_add_cheat_strip()
+	var feedback := HudFeedback.new()
+	feedback.name = "Feedback"
+	add_child(feedback)
 	_refresh_cash()
 	EventBus.cash_changed.connect(_on_cash_changed)
 	EventBus.ammo_changed.connect(set_ammo)

@@ -243,7 +243,12 @@ const FILES := {
 			"mouse_sensitivity": _NUM_POS,
 			"pitch_limit_deg": {"type": "number", "exclusive_min": 0, "max": 90},
 			"respawn_delay_s": _NUM_NONNEG,
+			"shake": {
+				"type": "object",
+				"fields": {"on_hit": _NUM_NONNEG, "on_fire": _NUM_NONNEG, "max": _NUM_NONNEG, "decay_per_s": _NUM_POS},
+			},
 		},
+		"optional": ["shake"],
 	},
 	"guns": {
 		"type": "object",

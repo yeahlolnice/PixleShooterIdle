@@ -47,6 +47,11 @@ signal round_summary(summary: Dictionary)
 # --- Economy / progression ----------------------------------------------------
 ## GameState cash changed. delta is negative for spending.
 signal cash_changed(total: float, delta: float)
+## MatchTracker paid `cash` for a bot kill; info is the bot_killed payload
+## (position, headshot, bot_type, gun_id). Juice: kill feed, +$ pop-ups.
+signal kill_rewarded(cash: float, info: Dictionary)
+## Scope view on/off (WeaponManager); HUD draws the scope overlay.
+signal scope_changed(scoped: bool)
 ## GameState kill counters changed.
 signal kills_changed(kills: int, lifetime_kills: int)
 ## A cheat became purchasable (kill or prestige threshold reached).

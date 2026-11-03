@@ -83,6 +83,15 @@ func _run() -> void:
 		player.step_noclip(1.0 / 60.0, Vector3.UP * 0.5 + Vector3.FORWARD)
 	await _snap("noclip_flying")
 
+	player.toggle_noclip()
+	var killer: Node = null
+	for b in get_tree().get_nodes_in_group("bots"):
+		if CheatTargeting.is_live(b):
+			killer = b
+			break
+	player.die(killer)
+	await _snap("death_screen")
+
 	var pause := _ui(PauseMenu) as PauseMenu
 	pause.open_menu()
 	await _snap("pause_menu")

@@ -54,6 +54,9 @@ func _ready() -> void:
 	loot.tracker = tracker
 	loot.container = spawner   # _clear_bots frees leftover loot with the bots
 	add_child(loot)
+	var fx := HitFx.new()
+	fx.name = "HitFx"
+	add_child(fx)
 	ui_layer.add_child(load("res://ui/hud/hud.tscn").instantiate())
 	# Chat before the menus so open menus draw on top of it.
 	ui_layer.add_child(load("res://ui/chat/chat_box.tscn").instantiate())

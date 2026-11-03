@@ -57,6 +57,10 @@ var is_dead := false
 var spawn_points: Array[Vector3] = []
 ## Mouse-look multiplier; WeaponManager lowers it while scoped (zoom ratio).
 var look_scale := 1.0
+## Screen shake (TASK-027): metres of camera view offset, decaying per
+## player.json "shake". shake_scale lets a settings menu turn it down (TASK-044).
+var shake := 0.0
+var shake_scale := 1.0
 ## False while a menu is open: look and movement input are ignored.
 var input_enabled := true
 
@@ -93,6 +97,8 @@ func _ready() -> void:
 	EventBus.menu_toggled.connect(_on_menu_toggled)
 	EventBus.bot_killed.connect(_on_bot_killed)
 	EventBus.round_state_changed.connect(_on_round_state_changed)
+	EventBus.player_damaged.connect(func(_amount, _left, _src): add_shake(_shake_cfg("on_hit")))
+	EventBus.weapon_fired.connect(func(_gun): add_shake(_shake_cfg("on_fire")))
 	if DisplayServer.get_name() != "headless":
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
@@ -259,6 +265,26 @@ func _body_extent(dir: Vector3) -> float:
 func _on_round_state_changed(state: StringName, _info: Dictionary) -> void:
 	if state == EventBus.ROUND_FREEZE and has_noclip():
 		noclip_fuel = float(noclip.get("burst_s", 0.0))
+
+
+# --- Screen shake --------------------------------------------------------------
+
+func add_shake(amount: float) -> void:
+	shake = minf(shake + amount * shake_scale, _shake_cfg("max"))
+
+
+func _shake_cfg(key: String) -> float:
+	return float(tuning.get("shake", {}).get(key, 0.0))
+
+
+func _process(delta: float) -> void:
+	if shake > 0.0:
+		shake = maxf(0.0, shake - _shake_cfg("decay_per_s") * delta)
+		camera.h_offset = randf_range(-shake, shake)
+		camera.v_offset = randf_range(-shake, shake)
+	elif camera.h_offset != 0.0 or camera.v_offset != 0.0:
+		camera.h_offset = 0.0
+		camera.v_offset = 0.0
 
 
 # --- Input ----------------------------------------------------------------------

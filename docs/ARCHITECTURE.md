@@ -82,6 +82,8 @@ Signals only (plus `emit_chat_event`). Emitter column = the only code that shoul
 | `gun_equipped` | `gun_id: String` | WeaponManager | HUD, buy menu |
 | `gun_upgraded` | `gun_id: String, stat: String, level: int` | ShopService.buy_upgrade | WeaponManager (re-applies), buy menu |
 | `arena_selected` | `arena_id: String` | ArenaService.select | Main (rebuilds the world, restarts rounds), buy menu |
+| `kill_rewarded` | `cash: float, info: Dictionary` (bot_killed payload) | MatchTracker | HUD kill feed + hit marker, HitFx "+$" pop-up |
+| `scope_changed` | `scoped: bool` | WeaponManager.set_aiming | HUD scope overlay |
 | `round_state_changed` | `state: StringName, info: {round: int, duration: float}` | RoundController | spawner, buy menu, HUD, ChatSystem |
 | `cash_changed` | `total: float, delta: float` | GameState only | HUD, mod/buy menus, ChatSystem (first_cash) |
 | `kills_changed` | `kills: int, lifetime_kills: int` | GameState only | CheatSystem (unlocks), HUD |
