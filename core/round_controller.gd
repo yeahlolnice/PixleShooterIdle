@@ -32,7 +32,7 @@ func _ready() -> void:
 func start(arena: String = "") -> void:
 	arena_id = arena if arena != "" else DataRegistry.first_arena_id()
 	var def := DataRegistry.arena(arena_id)
-	wave_size = int(def.get("bots_per_wave", 0)) + CheatSystem.extra_bots()
+	wave_size = _current_wave_size()
 	wave_types = def.get("bot_types", [])
 	if tracker:
 		tracker.arena_id = arena_id
@@ -103,7 +103,13 @@ func _enter(s: StringName) -> void:
 	EventBus.round_state_changed.emit(s, {"round": round_number, "duration": time_left})
 
 
+## Re-read every wave so Server Slots bought mid-game count from the next wave on.
+func _current_wave_size() -> int:
+	return int(DataRegistry.arena(arena_id).get("bots_per_wave", 0)) + CheatSystem.extra_bots()
+
+
 func _spawn_wave() -> void:
+	wave_size = _current_wave_size()
 	bots_alive = wave_size
 	spawn_wave_requested.emit(wave_size, wave_types)
 

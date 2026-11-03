@@ -13,18 +13,18 @@ extends Node3D
 signal shot_fired(hit: Dictionary)
 signal reload_started
 signal reload_finished
+## One shot's aim kick in degrees, positive = up. The owner (WeaponManager -> Player)
+## adds it to the real aim, so it stays until the player pulls the mouse back down.
+signal recoil_kicked(pitch_deg: float)
 
 enum State { READY, RELOADING }
 
 const MUZZLE_FLASH_S := 0.05
-const RECOIL_RECOVERY_DEG_S := 12.0
 
 var gun: Dictionary = {}
 var state: State = State.READY
 var ammo: int = 0
 var modifiers := {"mag_mult": 1.0, "recoil_mult": 1.0, "spread_mult": 1.0, "infinite_reload": false}
-## Camera pitch kick in degrees, positive = up. Decays back to 0.
-var recoil_offset_deg: float = 0.0
 
 var _cooldown: float = 0.0
 var _reload_left: float = 0.0
@@ -32,7 +32,6 @@ var _flash_left: float = 0.0
 var _rng := RandomNumberGenerator.new()
 var _flash: MeshInstance3D
 var _sound: AudioStreamPlayer
-var _camera: Camera3D
 
 
 func setup(gun_def: Dictionary) -> void:
@@ -40,7 +39,6 @@ func setup(gun_def: Dictionary) -> void:
 	state = State.READY
 	_cooldown = 0.0
 	_reload_left = 0.0
-	recoil_offset_deg = 0.0
 	ammo = mag_size()
 	_rng.randomize()
 	_build_viewmodel()
@@ -118,8 +116,10 @@ func try_fire() -> bool:
 		return false
 	ammo -= 1
 	_cooldown = fire_interval()
-	recoil_offset_deg += recoil_deg()
+	# Hitscan first: the shot goes where you aimed, the kick moves the next one.
 	var hit := _hitscan() if is_inside_tree() else {}
+	if recoil_deg() > 0.0:
+		recoil_kicked.emit(recoil_deg())
 	_flash_left = MUZZLE_FLASH_S
 	if _flash:
 		_flash.visible = true
@@ -158,8 +158,6 @@ func tick(delta: float) -> void:
 		_reload_left -= delta
 		if _reload_left <= 0.0:
 			_finish_reload()
-	if recoil_offset_deg > 0.0:
-		recoil_offset_deg = maxf(0.0, recoil_offset_deg - RECOIL_RECOVERY_DEG_S * delta)
 	if _flash_left > 0.0:
 		_flash_left -= delta
 		if _flash_left <= 0.0 and _flash:
@@ -168,10 +166,6 @@ func tick(delta: float) -> void:
 
 func _physics_process(delta: float) -> void:
 	tick(delta)
-	if _camera == null or not is_instance_valid(_camera):
-		_camera = get_viewport().get_camera_3d() if is_inside_tree() else null
-	if _camera:
-		_camera.rotation.x = deg_to_rad(recoil_offset_deg)
 
 
 # --- Hitscan --------------------------------------------------------------------------

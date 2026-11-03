@@ -29,7 +29,8 @@ section here. Files without a schema still load (raw, via `DataRegistry.get_file
 | `hax_points.kills_divisor` | number > 0 | `floor(sqrt(lifetime_kills / divisor))` |
 
 ## player.json
-`max_health`, `move_speed` (m/s), `ground_accel`, `air_accel`, `ground_friction` (m/s²),
+`max_health`, `move_speed` (m/s), `ground_accel`, `ground_friction` (m/s²), `air_accel` (Source
+sv_airaccelerate, ~12), `air_speed_cap` (m/s; in-air speed cap along the wish direction, CS 30 u ≈ 0.72),
 `jump_velocity` (m/s), `gravity` (m/s²), `mouse_sensitivity` (degrees per mouse pixel),
 `pitch_limit_deg` (0–90), `respawn_delay_s`.
 
@@ -46,7 +47,7 @@ section here. Files without a schema still load (raw, via `DataRegistry.get_file
 | `fire_rate` | shots/s > 0 | |
 | `mag_size` | int ≥ 1 | |
 | `reload_time_s` | seconds | |
-| `recoil_deg` | degrees | camera kick per shot |
+| `recoil_deg` | degrees | aim kick per shot (moves the real aim up; no auto-recovery) |
 | `spread_deg` | degrees | random cone half-angle |
 | `range_m` | metres | hitscan length |
 | `auto` | bool | hold to fire |
@@ -106,8 +107,8 @@ any other file must exist here (checked at load).
 Neutral (off/unowned) values: `false` for bools, `1.0` for player/weapon multipliers, `0.0` for
 cheat/game values. Each player/weapon modifier key belongs to one cheat only.
 Speed Hack, Infinite Ammo and Auto Bhop name scripts in `cheats/`. Auto Bhop's `cheat` effects
-(`hop_speed_gain`, `max_hop_speed_mult`, `uncapped`) are handed to `Player.set_bhop()` by its
-`apply()` and cleared by `remove()`; see DECISIONS D39–D40.
+(`autostrafe`, `max_hop_speed_mult`, `uncapped`) are handed to `Player.set_bhop()` by its
+`apply()` and cleared by `remove()`; see DECISIONS D39, D43–D44.
 Server Slots' level is stored in `GameState.server_slots`; its `extra_bots` effect is added to
 `arenas.json bots_per_wave` by RoundController via `CheatSystem.extra_bots()`.
 

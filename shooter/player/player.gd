@@ -13,13 +13,21 @@ extends CharacterBody3D
 ## move_speed, ground_accel, air_accel, jump_velocity, max_health. Setting a
 ## mod never touches the raw tuning, so clearing it restores base stats exactly.
 ##
+## Air movement is Counter-Strike/Source air acceleration: in the air only the
+## speed along the wish direction is capped (player.json air_speed_cap), so
+## strafing sideways while turning the mouse the same way adds speed with no limit.
+## Jumping on the landing tick skips ground friction, so the speed carries over.
+## A jump press counts for the next physics tick only (mouse wheel is bound too),
+## so hopping by hand takes CS-style timing.
+##
 ## Auto Bhop hook (only the auto_bhop cheat calls these):
-##   set_bhop({"hop_speed_gain": 0.05, "max_hop_speed_mult": 1.5, "uncapped": false})
+##   set_bhop({"autostrafe": 0.5, "max_hop_speed_mult": 1.5, "uncapped": false})
 ##   clear_bhop()                            # plain jumping again
-## Without it a jump needs a fresh press of jump; with it, holding jump hops on
-## every landing frame, ground friction is skipped on that frame, each hop adds
-## hop_speed_gain of the horizontal speed (up to effective move_speed *
-## max_hop_speed_mult unless uncapped) and air strafing keeps the speed.
+## With it, holding jump hops on every landing tick. While `autostrafe` > 0 the
+## cheat also strafes for you in the air: it pushes at right angles to the
+## velocity (the best angle for gain), turning toward the move direction, and
+## keeps that fraction of the gain. Auto-strafe speed stops at effective
+## move_speed * max_hop_speed_mult unless uncapped; it never slows the player.
 
 signal health_changed(health: float, max_health: float)
 
@@ -41,6 +49,10 @@ var _pitch := 0.0
 var _open_menus: Dictionary = {}
 var _respawn_timer := 0.0
 var _spawn_index := 0
+## A jump press waiting for the next physics tick.
+var _jump_queued := false
+## Auto-strafe side, +1 left / -1 right; flips each tick to hold a straight line.
+var _strafe_side := 1.0
 
 @onready var head: Node3D = $Head
 @onready var camera: Camera3D = $Head/Camera3D
@@ -98,20 +110,20 @@ func has_bhop() -> bool:
 	return not bhop.is_empty()
 
 
-## Horizontal speed after one hop that starts at `speed`. Never slows the
-## player: a speed already above the cap (e.g. after a level change) is kept.
-func hop_speed(speed: float) -> float:
-	var gain := float(bhop.get("hop_speed_gain", 0.0))
-	if gain <= 0.0 or speed <= 0.0:
-		return speed
-	var boosted := speed * (1.0 + gain)
+## Highest speed auto-strafe builds to (INF when uncapped). Speed Hack raises it.
+func hop_speed_cap() -> float:
 	if bool(bhop.get("uncapped", false)):
-		return boosted
-	var cap := effective(&"move_speed") * float(bhop.get("max_hop_speed_mult", 1.0))
-	return minf(boosted, maxf(cap, speed))
+		return INF
+	return effective(&"move_speed") * float(bhop.get("max_hop_speed_mult", 1.0))
 
 
 # --- Input ----------------------------------------------------------------------
+
+func _input(event: InputEvent) -> void:
+	# _input, not _unhandled_input: a focused UI button must not swallow Space.
+	if event.is_action_pressed("jump"):
+		_jump_queued = true
+
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
@@ -131,6 +143,16 @@ func look(relative: Vector2) -> void:
 	head.rotation.x = _pitch
 
 
+## Weapon recoil: pushes the real aim up by `pitch_deg` (clamped like mouse look).
+## Nothing pulls it back; the player compensates with the mouse.
+func add_aim_kick(pitch_deg: float) -> void:
+	if is_dead:
+		return
+	var limit := deg_to_rad(float(tuning.get("pitch_limit_deg", 89)))
+	_pitch = clampf(_pitch + deg_to_rad(pitch_deg), -limit, limit)
+	head.rotation.x = _pitch
+
+
 func get_pitch() -> float:
 	return _pitch
 
@@ -138,6 +160,8 @@ func get_pitch() -> float:
 # --- Movement -------------------------------------------------------------------
 
 func _physics_process(delta: float) -> void:
+	var jump_queued := _jump_queued
+	_jump_queued = false
 	if is_dead:
 		_respawn_timer -= delta
 		if _respawn_timer <= 0.0:
@@ -148,8 +172,8 @@ func _physics_process(delta: float) -> void:
 	if input_enabled:
 		var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 		wish = global_transform.basis * Vector3(input.x, 0.0, input.y)
-		# Holding jump only re-jumps with Auto Bhop; otherwise each hop needs a press.
-		jump_pressed = Input.is_action_pressed("jump") if has_bhop() else Input.is_action_just_pressed("jump")
+		# A press counts for this tick only; holding jump re-jumps only with Auto Bhop.
+		jump_pressed = jump_queued or (has_bhop() and Input.is_action_pressed("jump"))
 	step_movement(delta, wish, jump_pressed)
 	if global_position.y < float(tuning.get("fall_kill_y", -20.0)):
 		take_damage(health, null)
@@ -164,30 +188,63 @@ func step_movement(delta: float, wish: Vector3, jump_pressed: bool) -> void:
 	if not on_floor:
 		velocity.y -= float(tuning.get("gravity", 16.0)) * delta
 	elif jump_pressed:
-		# Jumping on the landing frame leaves on_floor false, so ground friction
-		# and ground accel are skipped this tick and hop speed carries over.
+		# Jumping on the landing tick leaves on_floor false, so ground friction
+		# and ground accel are skipped this tick and the speed carries over.
 		velocity.y = effective(&"jump_velocity")
 		on_floor = false
-		if has_bhop():
-			var speed := horizontal.length()
-			if speed > 0.0:
-				horizontal *= hop_speed(speed) / speed
 
-	var accel := effective(&"ground_accel" if on_floor else &"air_accel")
-	if wish.length_squared() > 0.0001:
-		var target := wish.normalized() * effective(&"move_speed") * minf(wish.length(), 1.0)
-		var speed := horizontal.length()
-		if has_bhop() and not on_floor and speed > target.length() and horizontal.dot(target) > 0.0:
-			# Bhop air strafe: steer toward the wish direction without bleeding speed.
-			horizontal = horizontal.move_toward(target.normalized() * speed, accel * delta)
-			horizontal = horizontal.normalized() * speed
-		else:
-			horizontal = horizontal.move_toward(target, accel * delta)
-	elif on_floor:
-		horizontal = horizontal.move_toward(Vector3.ZERO, float(tuning.get("ground_friction", 40.0)) * delta)
+	if on_floor:
+		horizontal = _ground_move(horizontal, wish, delta)
+	else:
+		horizontal = _air_move(horizontal, wish, delta)
 	velocity.x = horizontal.x
 	velocity.z = horizontal.z
 	move_and_slide()
+
+
+func _ground_move(horizontal: Vector3, wish: Vector3, delta: float) -> Vector3:
+	if wish.length_squared() > 0.0001:
+		var target := wish.normalized() * effective(&"move_speed") * minf(wish.length(), 1.0)
+		return horizontal.move_toward(target, effective(&"ground_accel") * delta)
+	return horizontal.move_toward(Vector3.ZERO, float(tuning.get("ground_friction", 40.0)) * delta)
+
+
+func _air_move(horizontal: Vector3, wish: Vector3, delta: float) -> Vector3:
+	var autostrafe := float(bhop.get("autostrafe", 0.0))
+	var speed := horizontal.length()
+	if autostrafe > 0.0 and speed > 0.0:
+		var heading := horizontal / speed
+		var steer := wish.normalized() if wish.length_squared() > 0.0001 else heading
+		if heading.dot(steer) >= 0.0:  # pressing back still brakes normally
+			return _autostrafe(horizontal, heading, steer, autostrafe, delta)
+	if wish.length_squared() <= 0.0001:
+		return horizontal
+	return air_accelerate(horizontal, wish.normalized(), effective(&"move_speed") * minf(wish.length(), 1.0), delta)
+
+
+## Source PM_AirAccelerate: adds speed along `dir` only while the velocity's
+## component along `dir` is below air_speed_cap. Pressing toward where you are
+## already going adds nothing; pressing at right angles always adds a little.
+func air_accelerate(horizontal: Vector3, dir: Vector3, wish_speed: float, delta: float) -> Vector3:
+	var add := minf(wish_speed, float(tuning.get("air_speed_cap", 0.7))) - horizontal.dot(dir)
+	if add <= 0.0:
+		return horizontal
+	return horizontal + dir * minf(effective(&"air_accel") * wish_speed * delta, add)
+
+
+## Auto Bhop's strafe: a right-angle push on the side that turns toward `steer`;
+## once on course it alternates sides so the path stays straight.
+func _autostrafe(horizontal: Vector3, heading: Vector3, steer: Vector3, strength: float, delta: float) -> Vector3:
+	var speed := horizontal.length()
+	var left := Vector3.UP.cross(heading)
+	var side := left.dot(steer)
+	if absf(side) < float(tuning.get("air_speed_cap", 0.7)) / speed:
+		_strafe_side = -_strafe_side
+	else:
+		_strafe_side = signf(side)
+	var pushed := air_accelerate(horizontal, left * _strafe_side, effective(&"move_speed"), delta)
+	var new_speed := minf(lerpf(speed, pushed.length(), strength), maxf(hop_speed_cap(), speed))
+	return pushed.normalized() * new_speed
 
 
 # --- Health ---------------------------------------------------------------------

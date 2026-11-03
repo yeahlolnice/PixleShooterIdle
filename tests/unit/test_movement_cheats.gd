@@ -1,7 +1,8 @@
 extends GutTest
 ## Speed Hack, Infinite Ammo and Auto Bhop: level 1 and max effects match the
 ## plan table / cheats.json, remove() restores base stats exactly (mock player
-## and the real Player/Weapon), and bhop speed builds per hop, capped below max.
+## and the real Player/Weapon), CS air strafing builds speed by hand, and Auto
+## Bhop's auto-strafe builds it per hop, capped below max.
 
 const PlayerScene := preload("res://shooter/player/player.tscn")
 const DT := 1.0 / 60.0
@@ -142,40 +143,52 @@ func test_auto_bhop_level_1_and_max_settings() -> void:
 	var p := MockPlayer.new()
 	c.apply(p, 1)
 	assert_false(p.bhop.is_empty(), "level 1: hold jump to hop")
-	assert_eq(p.bhop["hop_speed_gain"], 0.0, "no speed gain at level 1")
+	assert_eq(p.bhop["autostrafe"], 0.0, "no auto-strafe at level 1")
 	assert_false(p.bhop["uncapped"])
 	c.apply(p, c.max_level)
-	assert_almost_eq(p.bhop["hop_speed_gain"], float(_effect("auto_bhop", "hop_speed_gain")["to"]), 0.0001)
+	assert_almost_eq(p.bhop["autostrafe"], float(_effect("auto_bhop", "autostrafe")["to"]), 0.0001)
 	assert_true(p.bhop["uncapped"], "plan: no cap at max")
 	assert_false(c.value_at("uncapped", c.max_level - 1), "capped below max level")
-	assert_gt(float(c.value_at("hop_speed_gain", 2)), 0.0, "gain from level 2")
+	assert_gt(float(c.value_at("autostrafe", 2)), 0.0, "auto-strafe from level 2")
 	c.remove(p)
 	assert_eq(p.bhop, {}, "bhop cleared")
 	assert_eq(p.stat_mods, {})
 
 
-func test_hop_speed_gain_and_cap() -> void:
+func test_hop_speed_cap_follows_level_and_speed_hack() -> void:
 	var p: Player = add_child_autofree(PlayerScene.instantiate())
 	var c := _cheat("auto_bhop")
 	var ms := p.effective(&"move_speed")
-	c.apply(p, 1)
-	assert_eq(p.hop_speed(ms), ms, "level 1 keeps speed")
 	var lvl := c.max_level - 1
 	c.apply(p, lvl)
 	var cap := ms * float(c.value_at("max_hop_speed_mult", lvl))
-	assert_almost_eq(p.hop_speed(ms), ms * (1.0 + float(c.value_at("hop_speed_gain", lvl))), 0.0001)
-	assert_eq(p.hop_speed(cap), cap, "capped")
-	assert_eq(p.hop_speed(cap * 2.0), cap * 2.0, "never slows down")
+	assert_almost_eq(p.hop_speed_cap(), cap, 0.0001)
+	p.set_stat_mod(&"move_speed_mult", 2.0)
+	assert_almost_eq(p.hop_speed_cap(), cap * 2.0, 0.0001, "Speed Hack raises the cap")
 	c.apply(p, c.max_level)
-	assert_gt(p.hop_speed(cap * 2.0), cap * 2.0, "uncapped at max")
+	assert_eq(p.hop_speed_cap(), INF, "uncapped at max")
 	c.remove(p)
 	assert_false(p.has_bhop())
-	assert_eq(p.hop_speed(ms), ms)
 
 
-## Holds jump on a flat floor with no input and returns horizontal speed after
-## each landing hop.
-func _hop_speeds(p: Player, hops: int) -> Array:
+# --- CS air strafing (no cheat) ----------------------------------------------------
+
+func test_air_accelerate_only_caps_speed_along_wish_direction() -> void:
+	var p: Player = add_child_autofree(PlayerScene.instantiate())
+	var ms := p.effective(&"move_speed")
+	var air_cap := float(p.tuning["air_speed_cap"])
+	var v := Vector3(ms, 0, 0)
+	assert_eq(p.air_accelerate(v, Vector3.RIGHT, ms, DT), v, "pressing where you already go adds nothing")
+	var strafed := p.air_accelerate(v, Vector3.FORWARD, ms, DT)
+	assert_gt(strafed.length(), ms, "strafing at right angles goes past move speed")
+	assert_almost_eq(strafed.z, -air_cap, 0.0001, "sideways push limited to air_speed_cap")
+	assert_eq(strafed.x, v.x)
+
+
+## Puts the player on a big flat floor at move speed along +X, then holds jump
+## and returns horizontal speed after each landing hop. `strafe` = press at right
+## angles to the velocity every tick (perfect manual air strafing).
+func _hop_speeds(p: Player, hops: int, strafe: bool = false) -> Array:
 	var floor_body := StaticBody3D.new()
 	var shape := CollisionShape3D.new()
 	var box := BoxShape3D.new()
@@ -194,11 +207,26 @@ func _hop_speeds(p: Player, hops: int) -> Array:
 	var ticks := 0
 	while speeds.size() < hops and ticks < hops * 120:
 		var was_on_floor := p.is_on_floor()
-		p.step_movement(DT, Vector3.ZERO, true)
+		var wish := Vector3.ZERO
+		if strafe:
+			wish = Vector3.UP.cross(Vector3(p.velocity.x, 0, p.velocity.z).normalized())
+		p.step_movement(DT, wish, true)
 		if was_on_floor:
 			speeds.append(Vector2(p.velocity.x, p.velocity.z).length())
 		ticks += 1
 	return speeds
+
+
+func test_manual_strafe_jumping_builds_speed_without_cheat_or_cap() -> void:
+	var p: Player = add_child_autofree(PlayerScene.instantiate())
+	var ms := p.effective(&"move_speed")
+	var no_strafe := _hop_speeds(p, 4)
+	for s in no_strafe:
+		assert_almost_eq(s, ms, 0.01, "perfect hops with no strafing keep speed")
+	var speeds := _hop_speeds(p, 25, true)
+	assert_eq(speeds.size(), 25, "hopped on every landing")
+	assert_gt(speeds[1], speeds[0], "strafing builds speed per hop")
+	assert_gt(speeds[-1], ms * float(_effect("auto_bhop", "max_hop_speed_mult")["to"]), "no cap for manual strafing")
 
 
 func test_bhop_speed_builds_per_hop_and_caps_below_max() -> void:
@@ -209,7 +237,7 @@ func test_bhop_speed_builds_per_hop_and_caps_below_max() -> void:
 	var cap := p.effective(&"move_speed") * float(c.value_at("max_hop_speed_mult", lvl))
 	var speeds := _hop_speeds(p, 25)
 	assert_eq(speeds.size(), 25, "hopped on every landing")
-	assert_gt(speeds[1], speeds[0], "speed builds per hop")
+	assert_gt(speeds[1], speeds[0], "auto-strafe builds speed per hop with no input")
 	assert_gt(speeds[2], speeds[1])
 	assert_almost_eq(speeds[-1], cap, 0.01, "reaches the cap")
 	for s in speeds:

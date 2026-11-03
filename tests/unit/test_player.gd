@@ -27,6 +27,18 @@ func test_pitch_is_clamped() -> void:
 	assert_almost_eq(p.get_pitch(), -deg_to_rad(float(p.tuning["pitch_limit_deg"])), 0.0001)
 
 
+func test_recoil_kick_moves_aim_and_stays() -> void:
+	var p := _make_player()
+	var start := p.get_pitch()
+	p.add_aim_kick(2.0)
+	p.add_aim_kick(2.0)
+	assert_almost_eq(p.get_pitch(), start + deg_to_rad(4.0), 0.0001)
+	p._physics_process(1.0)
+	assert_almost_eq(p.get_pitch(), start + deg_to_rad(4.0), 0.0001, "no auto-recovery")
+	p.add_aim_kick(1000.0)
+	assert_almost_eq(p.get_pitch(), deg_to_rad(float(p.tuning["pitch_limit_deg"])), 0.0001)
+
+
 func test_death_signal_and_respawn() -> void:
 	var p := _make_player()
 	p.spawn_points.assign([Vector3(1, 1, 1)])

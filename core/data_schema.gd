@@ -192,6 +192,7 @@ const FILES := {
 			"move_speed": _NUM_POS,
 			"ground_accel": _NUM_POS,
 			"air_accel": _NUM_NONNEG,
+			"air_speed_cap": _NUM_NONNEG,
 			"ground_friction": _NUM_NONNEG,
 			"jump_velocity": _NUM_POS,
 			"gravity": _NUM_POS,

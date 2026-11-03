@@ -47,7 +47,7 @@ under 2 minutes.
    all four cheats unlocked, the save file is neither read nor written). Without the flag you play the real 10-kill path.
 2. 0:00 Freeze time: read the chat (WASD hint, B for buy menu). Press **Insert** → mod menu opens, the world slows. Press Insert again → speed returns to normal.
 3. 0:15 Buy **Speed Hack**, then **Infinite Ammo**, **Auto Bhop**, **Wallhack** (one level each). Read the seller DMs.
-4. 0:40 Round goes live. Run around, shoot a bot, hold jump while moving to bhop. Toggle each cheat off/on in the menu to compare.
+4. 0:40 Round goes live. Run around, shoot a bot, hold jump to bhop (with Auto Bhop), or scroll-wheel jump and strafe A/D with the mouse to build speed by hand. Toggle each cheat off/on in the menu to compare.
 5. 1:30 Upgrade each cheat 2–3 levels and note whether each upgrade is noticeable.
 6. 1:50 Close the game. Note: a `--dev-cash` session is **never saved** (D42). Relaunching without the flag starts
    from your normal save (or a fresh game), so the cheats you bought above will *not* be there — that is expected, not a save bug.

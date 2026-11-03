@@ -44,11 +44,11 @@ func test_cannot_fire_while_reloading_or_reload_full_mag() -> void:
 	assert_false(w.try_fire())
 
 
-func test_recoil_kicks_by_data_and_recovers() -> void:
+func test_recoil_kicks_by_data() -> void:
+	watch_signals(w)
 	w.try_fire()
-	assert_almost_eq(w.recoil_offset_deg, 1.8, 0.001)
-	w.tick(5.0)
-	assert_eq(w.recoil_offset_deg, 0.0)
+	assert_signal_emit_count(w, "recoil_kicked", 1)
+	assert_almost_eq(float(get_signal_parameters(w, "recoil_kicked")[0]), 1.8, 0.001)
 
 
 func test_mag_mult_changes_mag_and_refill() -> void:
@@ -65,8 +65,13 @@ func test_recoil_and_spread_mult() -> void:
 	w.set_modifier("spread_mult", 0.0)
 	assert_almost_eq(w.recoil_deg(), 0.9, 0.001)
 	assert_eq(w.spread_deg(), 0.0)
+	watch_signals(w)
 	w.try_fire()
-	assert_almost_eq(w.recoil_offset_deg, 0.9, 0.001)
+	assert_almost_eq(float(get_signal_parameters(w, "recoil_kicked")[0]), 0.9, 0.001)
+	w.set_modifier("recoil_mult", 0.0)
+	w.tick(1.0)
+	w.try_fire()
+	assert_signal_emit_count(w, "recoil_kicked", 1, "No Recoil maxed: no kick")
 
 
 func test_infinite_reload_is_instant() -> void:

@@ -39,7 +39,7 @@
       "base_cost": 1500,
       "max_level": 10,
       "effects": [
-        {"key": "hop_speed_gain", "target": "cheat", "type": "number", "from": 0.0, "to": 0.15, "curve": "linear"},
+        {"key": "autostrafe", "target": "cheat", "type": "number", "from": 0.0, "to": 1.0, "curve": "linear"},
         {"key": "max_hop_speed_mult", "target": "cheat", "type": "number", "from": 1.2, "to": 2.5, "curve": "linear"},
         {"key": "uncapped", "target": "cheat", "type": "bool", "from_level": 10}
       ]

@@ -31,6 +31,9 @@ func equip(gun_id: String) -> String:
 	weapon = Weapon.new()
 	var mount: Node = get_node_or_null(mount_path)
 	(mount if mount else self).add_child(weapon)
+	var aim_owner := get_parent()
+	if aim_owner and aim_owner.has_method("add_aim_kick"):
+		weapon.recoil_kicked.connect(aim_owner.add_aim_kick)
 	weapon.setup(def)
 	EventBus.gun_equipped.emit(def["id"])
 	return def["id"]

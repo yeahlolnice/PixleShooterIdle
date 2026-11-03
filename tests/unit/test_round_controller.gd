@@ -48,6 +48,15 @@ func test_wave_spawns_on_live_and_respawns_when_cleared() -> void:
 	assert_signal_emit_count(rc, "spawn_wave_requested", 2)
 
 
+func test_server_slots_bought_after_start_grow_next_wave() -> void:
+	rc.start()
+	var base := int(DataRegistry.arena(rc.arena_id)["bots_per_wave"])
+	GameState.server_slots = 3  # bought during freeze, after start()
+	rc.advance(float(_round["freeze_time_s"]) + 0.1)
+	assert_gt(CheatSystem.extra_bots(), 0)
+	assert_eq(rc.bots_alive, base + CheatSystem.extra_bots())
+
+
 func test_death_requests_respawn_after_delay() -> void:
 	watch_signals(rc)
 	rc.start()
