@@ -1,7 +1,13 @@
 class_name Bot
 extends CharacterBody3D
-## Grunt-style bot: wander -> chase on sight -> shoot, built from procedural boxes.
+## Bot: wander -> chase on sight -> shoot, built from procedural boxes.
 ## Stats come from bots.json x the arena's bot_mults (DataRegistry.bot_stats).
+## bots.json "behaviour" picks how it moves while shooting (TASK-025):
+##   grunt  - stops and shoots inside shoot_range_ratio of its sight
+##   sniper - shoots from its whole sight range, stays near its perch
+##            (wander_radius_m) and backs off when closer than keep_distance_m
+##   rusher - closes in fast, then strafes side to side (strafe_speed,
+##            strafe_switch_s, flips early when it hits a wall)
 ## Hitboxes are Area3Ds on Layers.HITBOXES with meta "bot" and "hit_kind" ("head"/"body");
 ## weapons call take_hit() on the bot found through that meta.
 
@@ -37,6 +43,8 @@ var _reaction_left := 0.0
 var _fire_cooldown := 0.0
 var _wander_pause := 0.0
 var _rng := RandomNumberGenerator.new()
+var _strafe_side := 1.0
+var _strafe_left := 0.0
 var _built := false
 var _head_shape: BoxShape3D
 
@@ -106,7 +114,7 @@ func _physics_process(delta: float) -> void:
 				_reaction_left -= delta
 				_face(target.global_position)
 				_stop(delta)
-			elif _distance_to_target() <= stats["sight_range_m"] * SHOOT_RANGE_RATIO:
+			elif _distance_to_target() <= shoot_range():
 				state = State.SHOOT
 			else:
 				_move_toward(target.global_position, delta)
@@ -114,11 +122,11 @@ func _physics_process(delta: float) -> void:
 			if not sees:
 				state = State.CHASE
 				_reaction_left = stats["reaction_time_s"]
-			elif _distance_to_target() > stats["sight_range_m"] * SHOOT_RANGE_RATIO * 1.2:
+			elif _distance_to_target() > shoot_range() * 1.2:
 				state = State.CHASE
 			else:
+				_combat_move(delta)
 				_face(target.global_position)
-				_stop(delta)
 				if _fire_cooldown <= 0.0:
 					_fire()
 					_fire_cooldown = 1.0 / stats["fire_rate"]
@@ -185,6 +193,15 @@ func _pop() -> void:
 
 # --- Perception / movement -------------------------------------------------------
 
+func behaviour() -> String:
+	return String(stats.get("behaviour", "grunt"))
+
+
+## Distance inside which the bot stops chasing and shoots.
+func shoot_range() -> float:
+	return float(stats["sight_range_m"]) * float(stats.get("shoot_range_ratio", SHOOT_RANGE_RATIO))
+
+
 func _distance_to_target() -> float:
 	return global_position.distance_to(target.global_position)
 
@@ -215,7 +232,7 @@ func _wander(delta: float) -> void:
 
 
 func _pick_wander_target() -> void:
-	var offset := Vector3(_rng.randf_range(-1, 1), 0, _rng.randf_range(-1, 1)) * WANDER_RADIUS
+	var offset := Vector3(_rng.randf_range(-1, 1), 0, _rng.randf_range(-1, 1)) * float(stats.get("wander_radius_m", WANDER_RADIUS))
 	var dest := _home + offset
 	var map := _agent.get_navigation_map()
 	if NavigationServer3D.map_get_regions(map).size() > 0:
@@ -237,6 +254,48 @@ func _move_toward(dest: Vector3, delta: float) -> void:
 	if dir != Vector3.ZERO:
 		_face(global_position + dir)
 	move_and_slide()
+
+
+## How this bot moves while shooting, by bots.json "behaviour".
+func _combat_move(delta: float) -> void:
+	match behaviour():
+		"rusher":
+			_strafe(delta)
+		"sniper":
+			if _distance_to_target() < float(stats.get("keep_distance_m", 0.0)):
+				_retreat(delta)
+			else:
+				_stop(delta)
+		_:
+			_stop(delta)
+
+
+## Sideways around the target; flips on a timer (jittered) or when blocked.
+func _strafe(delta: float) -> void:
+	_strafe_left -= delta
+	if _strafe_left <= 0.0 or is_on_wall():
+		_strafe_side = -_strafe_side
+		_strafe_left = float(stats.get("strafe_switch_s", 0.8)) * _rng.randf_range(0.6, 1.4)
+	var to := target.global_position - global_position
+	to.y = 0.0
+	if to.length_squared() < 0.0001:
+		_stop(delta)
+		return
+	var side := to.normalized().cross(Vector3.UP) * _strafe_side
+	var speed := float(stats.get("strafe_speed", stats["move_speed"]))
+	velocity.x = side.x * speed
+	velocity.z = side.z * speed
+	_apply_gravity(delta)
+	move_and_slide()
+
+
+## Straight away from the target (navmesh-aware via _move_toward).
+func _retreat(delta: float) -> void:
+	var away := global_position - target.global_position
+	away.y = 0.0
+	if away.length_squared() < 0.0001:
+		away = Vector3.FORWARD
+	_move_toward(global_position + away.normalized() * 3.0, delta)
 
 
 func _stop(delta: float) -> void:

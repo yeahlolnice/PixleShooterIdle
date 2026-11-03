@@ -166,6 +166,8 @@ static func resolve_bot_stats(bot_def: Dictionary, arena_def: Dictionary) -> Dic
 	var mults: Dictionary = arena_def.get("bot_mults", {})
 	stats["health"] = bot_def.get("health", 0.0) * mults.get("health", 1.0)
 	stats["move_speed"] = bot_def.get("move_speed", 0.0) * mults.get("move_speed", 1.0)
+	if bot_def.has("strafe_speed"):
+		stats["strafe_speed"] = bot_def["strafe_speed"] * mults.get("move_speed", 1.0)
 	stats["fire_rate"] = bot_def.get("fire_rate", 0.0) * mults.get("fire_rate", 1.0)
 	stats["damage"] = bot_def.get("damage", 0.0) * mults.get("damage", 1.0)
 	stats["reaction_time_s"] = bot_def.get("reaction_time_s", 0.0) * mults.get("reaction_time", 1.0)

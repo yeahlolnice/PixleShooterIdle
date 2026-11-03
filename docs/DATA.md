@@ -74,6 +74,11 @@ Top-level `upgrades` (optional, TASK-024): `stat -> {name, step, max_level, min_
 player), `aim_error_deg` (random cone half-angle of bot shots), `fire_rate` (shots/s), `damage` (per hit),
 `sight_range_m`, `cash_mult` (scales `kill_reward.base_cash`), `body_color`, `head_color` (palette names).
 
+Optional behaviour fields (TASK-025): `behaviour` (`grunt` default, `sniper`, `rusher`),
+`shoot_range_ratio` (0–1 of sight range where it stops to shoot; default 0.7), `keep_distance_m` (sniper backs
+off inside this), `wander_radius_m` (default 8; snipers stay near their perch), `strafe_speed` (m/s, scaled by
+the arena move_speed mult) and `strafe_switch_s` (rusher flips direction about this often, jittered ±40%).
+
 ## arenas.json
 ```json
 { "arenas": [ { ...arena... } ] }

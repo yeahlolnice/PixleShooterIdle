@@ -3,6 +3,7 @@
     {
       "id": "grunt",
       "name": "Grunt",
+      "behaviour": "grunt",
       "health": 100,
       "move_speed": 2.5,
       "reaction_time_s": 1.0,
@@ -12,6 +13,42 @@
       "sight_range_m": 22,
       "cash_mult": 1.0,
       "body_color": "bot_grunt",
+      "head_color": "bot_skin"
+    },
+    {
+      "id": "sniper",
+      "name": "Sniper",
+      "behaviour": "sniper",
+      "health": 60,
+      "move_speed": 2.0,
+      "reaction_time_s": 1.4,
+      "aim_error_deg": 4,
+      "fire_rate": 0.35,
+      "damage": 18,
+      "sight_range_m": 45,
+      "shoot_range_ratio": 1.0,
+      "keep_distance_m": 12,
+      "wander_radius_m": 1.5,
+      "cash_mult": 1.6,
+      "body_color": "bot_sniper",
+      "head_color": "bot_skin"
+    },
+    {
+      "id": "rusher",
+      "name": "Rusher",
+      "behaviour": "rusher",
+      "health": 70,
+      "move_speed": 5.0,
+      "reaction_time_s": 0.6,
+      "aim_error_deg": 18,
+      "fire_rate": 1.4,
+      "damage": 4,
+      "sight_range_m": 20,
+      "shoot_range_ratio": 0.5,
+      "strafe_speed": 4.5,
+      "strafe_switch_s": 0.7,
+      "cash_mult": 1.3,
+      "body_color": "bot_rusher",
       "head_color": "bot_skin"
     }
   ]
