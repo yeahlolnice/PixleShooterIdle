@@ -1,7 +1,8 @@
 extends Node
 ## The single serialisable game state: everything a save file contains.
-## In-memory only in Phase 1; TASK-008 adds save/load through SaveService +
-## SteamService.save_file/load_file, using to_dict()/from_dict() below.
+## Saved as JSON (user://save.json via SteamService) by SaveService, using
+## to_dict()/from_dict() below. Persistence is off until enable_persistence()
+## is called (Main does it), so tests never touch the player's real save.
 ##
 ## Mutate through the methods (they emit EventBus signals); read fields freely.
 ## Never put scene nodes or runtime-only state (current health, ammo) here.
@@ -33,9 +34,56 @@ var rootkit: Dictionary = {}
 ## Once-only chat triggers already fired, trigger_id -> true. (TASK-013)
 var chat_flags: Dictionary = {}
 
+## True once enable_persistence() ran: autosave at round end and on quit.
+var persistence_enabled := false
+var _saves: SaveService = null
+
 
 func _ready() -> void:
 	new_game()
+	EventBus.round_summary.connect(_on_round_summary)
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST and persistence_enabled:
+		save_game()
+
+
+# --- Persistence ------------------------------------------------------------------
+
+## Loads the save (or starts fresh) and turns on autosave. `storage` defaults to
+## the SteamService autoload; tests pass a stub backend with a temp directory.
+func enable_persistence(storage: Object = null) -> SaveService.LoadResult:
+	_saves = SaveService.new(storage if storage != null else SteamService)
+	persistence_enabled = true
+	return load_game()
+
+
+func disable_persistence() -> void:
+	persistence_enabled = false
+	_saves = null
+
+
+## Writes the save now. False if persistence is off or the write failed.
+func save_game() -> bool:
+	if _saves == null:
+		return false
+	return _saves.save(self)
+
+
+## Replaces the state from the save; a missing or corrupt save gives a new game.
+func load_game() -> SaveService.LoadResult:
+	new_game()
+	var result := _saves.load_into(self) if _saves != null else SaveService.LoadResult.MISSING
+	if result == SaveService.LoadResult.LOADED:
+		print("[GameState] save loaded (cash %.0f, lifetime kills %d)" % [cash, lifetime_kills])
+	EventBus.game_state_loaded.emit()
+	return result
+
+
+func _on_round_summary(_summary: Dictionary) -> void:
+	if persistence_enabled:
+		save_game()
 
 
 ## Fresh state for a brand-new player. Starting cash comes from economy.json.
@@ -108,37 +156,77 @@ func to_dict() -> Dictionary:
 	}
 
 
-## Replaces the whole state. Missing keys fall back to defaults so older or
-## partial saves load. Does not emit signals; callers emit game_state_loaded.
+## Replaces the whole state. Missing or wrongly typed keys fall back to
+## defaults, so older, partial or hand-edited saves load without errors.
+## Does not emit signals; load_game() emits game_state_loaded.
 func from_dict(d: Dictionary) -> void:
 	var data := migrate(d)
-	cash = float(data.get("cash", 0.0))
-	kills = int(data.get("kills", 0))
-	lifetime_kills = int(data.get("lifetime_kills", 0))
-	owned_guns.assign(data.get("owned_guns", []))
-	equipped_gun_id = str(data.get("equipped_gun_id", ""))
-	cheat_levels = _int_values(data.get("cheat_levels", {}))
-	cheat_enabled = data.get("cheat_enabled", {}).duplicate(true)
-	server_slots = int(data.get("server_slots", 0))
-	prestige_count = int(data.get("prestige_count", 0))
-	hax_points = int(data.get("hax_points", 0))
-	rootkit = _int_values(data.get("rootkit", {}))
-	chat_flags = data.get("chat_flags", {}).duplicate(true)
+	cash = _num(data, "cash", 0.0)
+	kills = int(_num(data, "kills", 0))
+	lifetime_kills = int(_num(data, "lifetime_kills", 0))
+	owned_guns.clear()
+	for gun_id in _typed(data, "owned_guns", TYPE_ARRAY, []):
+		if gun_id is String:
+			add_owned_gun(gun_id)
+	equipped_gun_id = str(_typed(data, "equipped_gun_id", TYPE_STRING, ""))
+	cheat_levels = _int_values(_typed(data, "cheat_levels", TYPE_DICTIONARY, {}))
+	cheat_enabled = _bool_values(_typed(data, "cheat_enabled", TYPE_DICTIONARY, {}))
+	server_slots = int(_num(data, "server_slots", 0))
+	prestige_count = int(_num(data, "prestige_count", 0))
+	hax_points = int(_num(data, "hax_points", 0))
+	rootkit = _int_values(_typed(data, "rootkit", TYPE_DICTIONARY, {}))
+	chat_flags = _bool_values(_typed(data, "chat_flags", TYPE_DICTIONARY, {}))
 
 
-## JSON turns every number into a float; levels are ints.
+static func _typed(d: Dictionary, key: String, type: int, default: Variant) -> Variant:
+	var value: Variant = d.get(key, default)
+	return value if typeof(value) == type else default
+
+
+static func _num(d: Dictionary, key: String, default: float) -> float:
+	var value: Variant = d.get(key, default)
+	return float(value) if (value is float or value is int) else default
+
+
+## JSON turns every number into a float; levels are ints. Non-numbers are dropped.
 static func _int_values(d: Dictionary) -> Dictionary:
 	var out := {}
 	for key in d:
-		out[key] = int(d[key])
+		if d[key] is float or d[key] is int:
+			out[str(key)] = int(d[key])
 	return out
 
 
-## Upgrades a save dictionary from an older save_version to SAVE_VERSION.
-## TASK-008 adds one step per version bump here.
-static func migrate(d: Dictionary) -> Dictionary:
+static func _bool_values(d: Dictionary) -> Dictionary:
+	var out := {}
+	for key in d:
+		if d[key] is bool:
+			out[str(key)] = d[key]
+	return out
+
+
+## Upgrades a save dictionary from an older save_version to `target`.
+## A dictionary without save_version is treated as version 0 (pre-versioned).
+## Each step upgrades version N to N + 1; add a case to _migrate_step on every
+## SAVE_VERSION bump. `steps` (from_version -> Callable(Dictionary) -> Dictionary)
+## overrides built-in steps; tests use it to exercise future versions.
+## A save from a newer game version loads its known keys with a warning.
+static func migrate(d: Dictionary, target: int = SAVE_VERSION, steps: Dictionary = {}) -> Dictionary:
 	var data := d.duplicate(true)
-	var _version := int(data.get("save_version", SAVE_VERSION))
-	# if _version < 2: data = _migrate_1_to_2(data)
-	data["save_version"] = SAVE_VERSION
+	var version := int(_num(data, "save_version", 0))
+	if version > target:
+		push_warning("[GameState] save_version %d is newer than supported %d; loading known fields only" % [version, target])
+	while version < target:
+		data = steps[version].call(data) if steps.has(version) else _migrate_step(version, data)
+		version += 1
+	data["save_version"] = target
+	return data
+
+
+static func _migrate_step(from_version: int, data: Dictionary) -> Dictionary:
+	match from_version:
+		0:
+			pass # Unversioned (Phase 1 in-memory) dicts already use the v1 layout.
+		_:
+			push_warning("[GameState] no migration from save_version %d" % from_version)
 	return data

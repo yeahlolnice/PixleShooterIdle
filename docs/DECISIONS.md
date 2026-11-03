@@ -31,3 +31,6 @@ When the plan is silent, pick the simplest option that fits the design, record i
 | D24 | Input uses physical keycodes | Same physical WASD on non-QWERTY layouts | Architect |
 | D25 | `.gitattributes` forces LF line endings | The factory git config has `core.autocrlf=true`, which would break shell scripts | Architect |
 | D26 | Godot is installed to `~/.local/godot` (symlink `~/.local/bin/godot`); scripts honour `$GODOT` | No root needed in fresh containers | Architect |
+| D27 | Save file `user://save.json` (via SteamService), pretty JSON with full float precision; dict without `save_version` = v0, migrated step by step in `GameState.migrate`; newer versions load known keys with a warning | Round-trip must be exact; migrations stay one small step per bump | Bea (TASK-008) |
+| D28 | Corrupt save (unparseable or not a JSON object) is copied to `save.corrupt.json`, removed and replaced by a new game with a logged warning; wrongly typed fields fall back to defaults | Never crash, never silently lose the bad file | Bea (TASK-008) |
+| D29 | Persistence is opt-in: `Main._enter_tree` calls `GameState.enable_persistence()` (export `use_save_file`); autosave on `round_summary` and on window close. SteamService picks its backend in `_enter_tree` so it is ready first | Tests never touch the player's save; saved gun is equipped on boot | Bea (TASK-008) |

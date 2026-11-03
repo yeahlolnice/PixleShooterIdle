@@ -2,7 +2,8 @@ extends Node
 ## Facade over Steam. Gameplay code only talks to this autoload, never to the
 ## GodotSteam "Steam" singleton, so the game runs with Steam absent.
 ##
-## Backend selection (once, in _ready):
+## Backend selection (once, in _enter_tree, so it is ready before any scene's
+## _enter_tree/_ready, e.g. Main loading the save):
 ##   GodotSteam singleton present AND autoload/steam_service_godotsteam.gd exists -> that backend
 ##   otherwise -> autoload/steam_service_stub.gd
 ## The choice is logged exactly once: "[SteamService] backend: stub (GodotSteam not found)".
@@ -14,7 +15,9 @@ const GODOTSTEAM_BACKEND_PATH := "res://autoload/steam_service_godotsteam.gd"
 var _backend: RefCounted = null
 
 
-func _ready() -> void:
+func _enter_tree() -> void:
+	if _backend != null:
+		return
 	var present := godotsteam_present()
 	_backend = select_backend(present)
 	if not _backend.initialize():
