@@ -58,3 +58,26 @@ func test_walks_collides_and_does_not_tunnel() -> void:
 	# Jump leaves the floor.
 	p.step_movement(1.0 / 60.0, Vector3.ZERO, true)
 	assert_gt(p.velocity.y, 0.0)
+
+
+# TASK-015: closing one menu must not re-enable input while another is still open.
+func test_menu_state_is_tracked_per_menu_id() -> void:
+	var p := _make_player()
+	EventBus.menu_toggled.emit(&"buy_menu", true)
+	EventBus.menu_toggled.emit(&"mod_menu", true)
+	EventBus.menu_toggled.emit(&"mod_menu", false)
+	assert_true(p.is_menu_open(), "buy menu still open")
+	assert_false(p.input_enabled, "input stays disabled while buy menu is open")
+	EventBus.menu_toggled.emit(&"buy_menu", false)
+	assert_false(p.is_menu_open())
+	assert_true(p.input_enabled)
+
+
+func test_repeated_close_of_same_menu_is_harmless() -> void:
+	var p := _make_player()
+	EventBus.menu_toggled.emit(&"buy_menu", true)
+	EventBus.menu_toggled.emit(&"buy_menu", true)
+	EventBus.menu_toggled.emit(&"mod_menu", false)
+	assert_false(p.input_enabled, "closing a menu that was never open changes nothing")
+	EventBus.menu_toggled.emit(&"buy_menu", false)
+	assert_true(p.input_enabled)
