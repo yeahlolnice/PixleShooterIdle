@@ -24,6 +24,49 @@ under 2 minutes.
 - ...
 -->
 
+## Build 2026-11-03 — Phase 3 Vertical slice (TASK-022..031) — GATE 3: "Are friends hooked?"
+
+**What changed**
+- **Guns:** shotgun (8 pellets), SMG and LMG with spread bloom, rifle, and a sniper with a right-click
+  scope (zoom, scope overlay, slower aim). Buy menu rows per class; locked guns say how many kills
+  they need. **Gun upgrades:** damage and fire-rate levels for the gun in hand, kept through death.
+- **Bots:** Snipers (long range, stay on perches, back off when rushed) and Rushers (fast, strafe while
+  shooting), with faces, caps and headbands, and coin + confetti deaths.
+- **Rooftop arena** (unlocks at 500 lifetime kills, ×10 cash, tougher bots): switch in the buy
+  menu's SERVER row during buy time.
+- **Juice:** hit markers, damage numbers, "+$" pop-ups, kill feed, death screen naming your killer,
+  screen shake. **Sound:** every action has a procedural sound; each gun class sounds different.
+- **Cheat visuals:** Aimbot FOV circle + red laser, God Mode rainbow edge, Triggerbot / Spinbot
+  flashes, Loot Magnet "$" tags.
+- **Owner changes:** Auto Bhop = perfect jumps only, cap raised by 5 (D51); Esc → "DEV: unlock
+  everything" for testing (D52; that session is not saved).
+- Store page drafts in `docs/STORE_PAGE.md`. 242 GUT tests; the windowed tour now covers all of the above.
+
+**How to get it**
+- The factory workspace is fast-forwarded, so your builder runs it. From source: `godot --path .`
+
+**Test it in under 5 minutes**
+1. Esc → **DEV: unlock everything**, Esc to resume. Press **B**: SERVER row → **Rooftop**.
+2. Buy the **Long Boi** sniper, hold **right mouse** to scope, shoot a sniper on a perch.
+3. Round goes live: try the **Boomstick** on a Rusher up close, then the **BRRT-9000** (hold fire, watch the spread bloom).
+4. **Insert** → buy Aimbot, Wallhack, God Mode, Loot Magnet. Watch the red laser, outlines,
+   rainbow edge and "$" tags. Let a bot kill you with God Mode off to see the death screen.
+5. In the next buy time, upgrade your gun's damage in the buy menu's UPGRADE row.
+
+**Feedback we need (Gate 3)**
+- Give the build to 2–3 friends: do they want "one more round"? Where do they stop?
+- Does each gun feel different? Is the sniper scope fun or fiddly?
+- Are Snipers / Rushers fair at Rooftop's ×1.5 health and damage?
+- Sounds: any too loud, annoying, or missing? (All placeholder synth; real SFX can replace them.)
+- Art: are faces / caps / confetti the right direction before real voxel models? **[art approval]**
+- Store page text in `docs/STORE_PAGE.md`: approve or edit.
+
+**Known issues**
+- Prestige, Rootkit, Heavies, Mods and arenas 3–4 are Phase 4. God Mode / Spinbot / Noclip are only
+  reachable via the DEV button until prestige exists.
+- No music yet (TASK-041) and no settings menu yet (volume, sensitivity: TASK-044).
+- All prices and unlock numbers are placeholders until the balance pass (TASK-042/043).
+
 ## Build 2026-11-03 — Phase 2.5 Stabilise (TASK-016..021) — GATE 2 re-check: "Do cheats feel good?"
 
 **What changed**

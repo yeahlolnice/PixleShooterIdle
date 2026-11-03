@@ -113,6 +113,9 @@ scale. Waiting on the human Gate 2 sign-off (see BUILD_NOTES.md).
 
 ### Phase 3 — Vertical slice (≈ 2–3 weeks)
 
+**Status (Nov 3): TASK-022…031 done** (242 tests, windowed tour). Waiting on Gate 3 (see BUILD_NOTES.md).
+Owner-requested extras landed too: Auto Bhop perfect-jumps-only (D51) and the DEV unlock button (D52).
+
 | ID | Ticket | Size | Acceptance |
 |---|---|---|---|
 | TASK-022 | Weapon system v2: pellets (shotgun), scope/zoom (sniper), sustained fire with spread bloom (SMG/LMG), per-gun viewmodel + fire anim | L | Tests: pellet count/spread; zoom FOV; bloom grows/recovers |
