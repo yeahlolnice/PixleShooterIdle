@@ -48,9 +48,11 @@
       "unlock": {"kills": 400},
       "base_cost": 4000,
       "max_level": 10,
+      "script": "res://cheats/wallhack.gd",
       "effects": [
         {"key": "radius_m", "target": "cheat", "type": "number", "from": 10.0, "to": 500.0, "curve": "exp"},
-        {"key": "health_bars", "target": "cheat", "type": "bool", "from_level": 10}
+        {"key": "whole_map", "target": "cheat", "type": "bool", "from_level": 10},
+        {"key": "health_bars", "target": "cheat", "type": "bool", "from_level": 8}
       ]
     },
     {
