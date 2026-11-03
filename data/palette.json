@@ -1,0 +1,32 @@
+{
+  "colors": {
+    "missing": "#ff00ff",
+    "sky": "#8fd3ff",
+    "floor": "#5b6c8f",
+    "floor_alt": "#4a5a7a",
+    "wall": "#3d4766",
+    "wall_trim": "#2a3150",
+    "crate": "#d9a05b",
+    "crate_dark": "#a8743a",
+    "platform": "#6fb3b8",
+    "accent": "#ff5fa2",
+    "player": "#4da6ff",
+    "bot_grunt": "#7bc96f",
+    "bot_sniper": "#9b7bd9",
+    "bot_rusher": "#ff8a3d",
+    "bot_heavy": "#c94f4f",
+    "bot_mod": "#f2f2f2",
+    "bot_skin": "#ffd28a",
+    "gun_grey": "#8a8f99",
+    "gun_teal": "#3dd6c4",
+    "gun_gold": "#ffc83d",
+    "cash": "#ffd700",
+    "neon": "#39ff14",
+    "danger": "#ff3b3b",
+    "ui_bg": "#141021",
+    "ui_text": "#e8e6ff",
+    "chat_system": "#ffe14d",
+    "chat_seller": "#ff4dd8",
+    "chat_bot": "#ffffff"
+  }
+}

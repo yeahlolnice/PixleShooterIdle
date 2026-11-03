@@ -1,0 +1,11 @@
+{
+  "starter_gun": "a",
+  "guns": [
+    {"id": "a", "name": "Missing mag", "price": 0, "damage": 10, "headshot_mult": 2, "fire_rate": 1,
+     "reload_time_s": 1, "recoil_deg": 1, "spread_deg": 1, "range_m": 10, "auto": false, "unlock_kills": 0, "color": "gun_grey"},
+    {"id": "b", "name": "String damage", "price": 0, "damage": "lots", "headshot_mult": 2, "fire_rate": 1, "mag_size": 5,
+     "reload_time_s": 1, "recoil_deg": 1, "spread_deg": 1, "range_m": 10, "auto": false, "unlock_kills": 0, "color": "gun_grey"},
+    {"id": "c", "name": "Fractional mag", "price": 0, "damage": 10, "headshot_mult": 2, "fire_rate": 1, "mag_size": 5.5,
+     "reload_time_s": 1, "recoil_deg": 1, "spread_deg": 1, "range_m": 10, "auto": false, "unlock_kills": 0, "color": "gun_grey"}
+  ]
+}

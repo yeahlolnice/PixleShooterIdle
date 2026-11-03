@@ -1,0 +1,18 @@
+{
+  "bots": [
+    {
+      "id": "grunt",
+      "name": "Grunt",
+      "health": 100,
+      "move_speed": 2.5,
+      "reaction_time_s": 1.0,
+      "aim_error_deg": 14,
+      "fire_rate": 0.7,
+      "damage": 5,
+      "sight_range_m": 22,
+      "cash_mult": 1.0,
+      "body_color": "bot_grunt",
+      "head_color": "bot_skin"
+    }
+  ]
+}

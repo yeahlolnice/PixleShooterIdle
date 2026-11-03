@@ -1,0 +1,12 @@
+{
+  "max_health": 100,
+  "move_speed": 6.0,
+  "ground_accel": 60.0,
+  "air_accel": 10.0,
+  "ground_friction": 40.0,
+  "jump_velocity": 5.5,
+  "gravity": 16.0,
+  "mouse_sensitivity": 0.12,
+  "pitch_limit_deg": 89,
+  "respawn_delay_s": 3.0
+}
