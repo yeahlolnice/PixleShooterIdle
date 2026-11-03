@@ -2,6 +2,10 @@
   "colors": {
     "missing": "#ff00ff",
     "sky": "#8fd3ff",
+    "sky_dusk": "#ffb38a",
+    "roof": "#6b6f80",
+    "roof_trim": "#4b4f63",
+    "vent": "#a9b2c4",
     "floor": "#5b6c8f",
     "floor_alt": "#4a5a7a",
     "wall": "#3d4766",

@@ -32,15 +32,8 @@ func _enter_tree() -> void:
 func _ready() -> void:
 	if not DataRegistry.is_valid():
 		push_error("[Main] data errors, see log above; the game may misbehave")
-	var id := arena_id if arena_id != "" else DataRegistry.first_arena_id()
-	var arena_def := DataRegistry.arena(id)
-	arena.build(arena_def)
-	world_env.environment.background_color = DataRegistry.color(arena_def.get("sky_color", "sky"))
-	if not arena.player_spawns.is_empty():
-		player.spawn_points = arena.player_spawns
-		player.global_position = arena.player_spawns[0]
-	print("[Main] arena '%s' built: %d blocks, %d bot spawns, %d navmesh polygons" % [id, arena.block_count(), arena.bot_spawns.size(), arena.nav_polygon_count()])
-	EventBus.player_spawned.emit(player)
+	var id := arena_id if arena_id != "" else ArenaService.selected_id()
+	_build_arena(id)
 
 	tracker = MatchTracker.new()
 	tracker.name = "MatchTracker"
@@ -62,13 +55,45 @@ func _ready() -> void:
 	loot.container = spawner   # _clear_bots frees leftover loot with the bots
 	add_child(loot)
 	ui_layer.add_child(load("res://ui/hud/hud.tscn").instantiate())
+	# Chat before the menus so open menus draw on top of it.
+	ui_layer.add_child(load("res://ui/chat/chat_box.tscn").instantiate())
 	var buy_menu: BuyMenu = load("res://ui/buy_menu/buy_menu.tscn").instantiate()
 	buy_menu.weapon_manager = player.get_node_or_null("WeaponManager")
 	ui_layer.add_child(buy_menu)
-	ui_layer.add_child(load("res://ui/chat/chat_box.tscn").instantiate())
 	ui_layer.add_child(load("res://ui/mod_menu/mod_menu.tscn").instantiate())
 	ui_layer.add_child(load("res://ui/pause_menu/pause_menu.tscn").instantiate())
+	EventBus.arena_selected.connect(switch_arena)
+	EventBus.kills_changed.connect(_on_kills_changed)
 	rounds.start(id)
+
+
+## Builds `id`'s blocks, sky and navmesh and puts the player on its first spawn.
+func _build_arena(id: String) -> void:
+	var arena_def := DataRegistry.arena(id)
+	arena.build(arena_def)
+	world_env.environment.background_color = DataRegistry.color(arena_def.get("sky_color", "sky"))
+	if not arena.player_spawns.is_empty():
+		player.spawn_points = arena.player_spawns
+		player.global_position = arena.player_spawns[0]
+		player.velocity = Vector3.ZERO
+	print("[Main] arena '%s' built: %d blocks, %d bot spawns, %d navmesh polygons" % [id, arena.block_count(), arena.bot_spawns.size(), arena.nav_polygon_count()])
+	EventBus.player_spawned.emit(player)
+
+
+## ArenaService picked another arena: clear the wave, rebuild, restart at freeze time.
+func switch_arena(id: String) -> void:
+	if rounds == null or id == rounds.arena_id or DataRegistry.arena(id).is_empty():
+		return
+	_clear_bots()
+	_build_arena(id)
+	rounds.start(id)
+
+
+## Tells chat when this kill crossed an arena's unlock threshold.
+func _on_kills_changed(_kills: int, lifetime: int) -> void:
+	for id in ArenaService.unlocked_at(lifetime):
+		var a := DataRegistry.arena(id)
+		EventBus.emit_chat_event(&"arena_unlocked", {"arena_id": id, "arena_name": a.get("name", id), "cash_mult": a.get("cash_mult", 1)})
 
 
 func _respawn_player() -> void:

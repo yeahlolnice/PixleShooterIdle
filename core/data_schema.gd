@@ -105,6 +105,7 @@ const _ARENA := {
 		"name": {"type": "string"},
 		"order": {"type": "int", "min": 1},
 		"cash_mult": _NUM_POS,
+		"unlock_kills": {"type": "int", "min": 0},
 		"bots_per_wave": {"type": "int", "min": 1},
 		"bot_types": {"type": "array", "items": {"type": "string"}, "min_items": 1},
 		"bot_mults": {
@@ -123,6 +124,7 @@ const _ARENA := {
 		"player_spawns": {"type": "array", "items": {"type": "vec3"}, "min_items": 1},
 		"bot_spawns": {"type": "array", "items": {"type": "vec3"}, "min_items": 1},
 	},
+	"optional": ["unlock_kills"],
 }
 
 const _CHAT_TRIGGER := {

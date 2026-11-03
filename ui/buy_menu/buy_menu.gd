@@ -20,6 +20,7 @@ var _feedback: Label
 var _buttons: Dictionary = {}  # gun_id -> Button
 var _upgrade_title: Label
 var _upgrade_buttons: Dictionary = {}  # stat -> Button (upgrades the equipped gun)
+var _arena_buttons: Dictionary = {}  # arena_id -> Button
 
 
 func _ready() -> void:
@@ -44,6 +45,7 @@ func _ready() -> void:
 	_cash_label = Label.new()
 	_cash_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	head.add_child(_cash_label)
+	box.add_child(_build_arena_row())
 	_rows = VBoxContainer.new()
 	_rows.add_theme_constant_override("separation", 6)
 	box.add_child(_rows)
@@ -55,7 +57,37 @@ func _ready() -> void:
 	EventBus.cash_changed.connect(func(_t, _d): _refresh())
 	EventBus.gun_equipped.connect(func(_id): _refresh())
 	EventBus.gun_upgraded.connect(func(_id, _s, _l): _refresh())
+	EventBus.arena_selected.connect(func(_id): _refresh())
 	EventBus.kills_changed.connect(func(_k, _l): _refresh())
+
+
+## "SERVER:" + one button per arena (ArenaService). Switching restarts freeze time there.
+func _build_arena_row() -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	var label := Label.new()
+	label.text = "SERVER:"
+	label.custom_minimum_size = Vector2(130, 0)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	row.add_child(label)
+	for a in DataRegistry.arenas():
+		var b := Button.new()
+		b.custom_minimum_size = Vector2(200, 34)
+		b.add_theme_font_size_override("font_size", 13)
+		b.pressed.connect(func(): ArenaService.select(a["id"]))
+		row.add_child(b)
+		_arena_buttons[a["id"]] = b
+	return row
+
+
+## "Rooftop  x10" / "Rooftop  needs 500 kills" / "> Warehouse  x1 <" (selected).
+static func arena_text(arena_id: String) -> String:
+	var a := DataRegistry.arena(arena_id)
+	var title := String(a.get("name", arena_id))
+	if not ArenaService.is_unlocked(arena_id):
+		return "%s  needs %s kills" % [title, Fmt.number(ArenaService.unlock_kills(arena_id))]
+	var text := "%s  x%s cash" % [title, Fmt.number(float(a.get("cash_mult", 1)))]
+	return "> %s <" % text if arena_id == ArenaService.selected_id() else text
 
 
 ## "UPGRADE <gun>:" + one button per guns.json upgrade stat, for the gun in hand.
@@ -205,6 +237,10 @@ func _refresh() -> void:
 		b.tooltip_text = ShopService.message(r)
 		var need := int(DataRegistry.gun(id).get("unlock_kills", 0))
 		b.text = String(b.get_meta("label")) + ("\nneeds %s kills" % Fmt.number(need) if r == ShopService.Result.LOCKED else "")
+	for arena_id in _arena_buttons:
+		var ab: Button = _arena_buttons[arena_id]
+		ab.text = arena_text(arena_id)
+		ab.disabled = not ArenaService.is_unlocked(arena_id) or arena_id == ArenaService.selected_id()
 	var held := ShopService.equipped_id()
 	_upgrade_title.text = "UPGRADE %s:" % String(DataRegistry.gun(held).get("name", held)).to_upper()
 	for stat in _upgrade_buttons:

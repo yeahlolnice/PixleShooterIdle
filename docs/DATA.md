@@ -88,6 +88,7 @@ the arena move_speed mult) and `strafe_switch_s` (rusher flips direction about t
 | `id`, `name` | string | |
 | `order` | int ≥ 1 | progression order (`DataRegistry.arenas()` is sorted by it) |
 | `cash_mult` | number > 0 | `global_mult` factor for kills here (plan: ×10 per arena) |
+| `unlock_kills` | optional int ≥ 0 | lifetime kills to unlock (default 0); unlocked arenas stay unlocked through bans. Picked in the buy menu's SERVER row during freeze time (ArenaService, `GameState.current_arena_id`) |
 | `bots_per_wave` | int ≥ 1 | base wave size (+ `GameState.server_slots`) |
 | `bot_types` | array of bot ids | which bots spawn here |
 | `bot_mults` | object | `health`, `move_speed`, `fire_rate`, `damage` multiply the stat; `reaction_time`, `aim_error` multiply those (lower = harder bots) |

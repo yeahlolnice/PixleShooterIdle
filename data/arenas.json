@@ -5,6 +5,7 @@
       "name": "Warehouse",
       "order": 1,
       "cash_mult": 1,
+      "unlock_kills": 0,
       "bots_per_wave": 6,
       "bot_types": ["grunt"],
       "bot_mults": {
@@ -48,6 +49,57 @@
         [16, 1, 0],
         [-8, 1, -10],
         [8, 1, -10]
+      ]
+    },
+    {
+      "id": "arena_2",
+      "name": "Rooftop",
+      "order": 2,
+      "cash_mult": 10,
+      "unlock_kills": 500,
+      "bots_per_wave": 7,
+      "bot_types": ["sniper", "grunt", "rusher"],
+      "bot_mults": {
+        "health": 1.5,
+        "move_speed": 1.1,
+        "reaction_time": 0.85,
+        "aim_error": 0.8,
+        "fire_rate": 1.1,
+        "damage": 1.5
+      },
+      "sky_color": "sky_dusk",
+      "blocks": [
+        {"pos": [0, -0.5, 0], "size": [44, 1, 44], "color": "roof"},
+        {"pos": [0, 0.6, -22.5], "size": [46, 1.2, 1], "color": "roof_trim"},
+        {"pos": [0, 0.6, 22.5], "size": [46, 1.2, 1], "color": "roof_trim"},
+        {"pos": [-22.5, 0.6, 0], "size": [1, 1.2, 44], "color": "roof_trim"},
+        {"pos": [22.5, 0.6, 0], "size": [1, 1.2, 44], "color": "roof_trim"},
+        {"pos": [0, 1.5, -8], "size": [8, 3, 6], "color": "wall"},
+        {"pos": [-14, 2, -14], "size": [4, 4, 4], "color": "vent"},
+        {"pos": [14, 1.5, -15], "size": [5, 3, 3], "color": "vent"},
+        {"pos": [0, 0.25, 8], "size": [6, 0.5, 4], "color": "platform"},
+        {"pos": [-6, 0.75, 6], "size": [3, 1.5, 2], "color": "vent"},
+        {"pos": [8, 0.75, 4], "size": [2, 1.5, 3], "color": "vent"},
+        {"pos": [-14, 0.75, 8], "size": [4, 1.5, 2], "color": "roof_trim"},
+        {"pos": [12, 0.75, 12], "size": [3, 1.5, 3], "color": "vent"},
+        {"pos": [4, 0.5, -2], "size": [1, 1, 1], "color": "crate"},
+        {"pos": [-3, 0.5, 14], "size": [1, 1, 1], "color": "crate_dark"},
+        {"pos": [-10, 1, -2], "size": [2, 2, 2], "color": "crate"},
+        {"pos": [10, 1, -8], "size": [2, 2, 2], "color": "crate_dark"}
+      ],
+      "player_spawns": [
+        [0, 1, 18],
+        [-8, 1, 18],
+        [8, 1, 18]
+      ],
+      "bot_spawns": [
+        [-14, 4.1, -14],
+        [-18, 1, -6],
+        [18, 1, -6],
+        [14, 3.1, -15],
+        [0, 1, -16],
+        [-10, 1, -18],
+        [0, 3.1, -8]
       ]
     }
   ]

@@ -33,6 +33,8 @@ var hax_points: int = 0
 var rootkit: Dictionary = {}
 ## Once-only chat triggers already fired, trigger_id -> true. (TASK-013)
 var chat_flags: Dictionary = {}
+## Arena picked in the buy menu ("" = first arena). Kept through bans. (TASK-026)
+var current_arena_id: String = ""
 ## Bought gun upgrade levels, "<gun_id>:<stat>" -> level. Kept through death
 ## (only the gun is lost), reset on prestige. (TASK-024)
 var gun_upgrades: Dictionary = {}
@@ -165,6 +167,7 @@ func to_dict() -> Dictionary:
 		"rootkit": rootkit.duplicate(true),
 		"chat_flags": chat_flags.duplicate(true),
 		"gun_upgrades": gun_upgrades.duplicate(true),
+		"current_arena_id": current_arena_id,
 	}
 
 
@@ -189,6 +192,7 @@ func from_dict(d: Dictionary) -> void:
 	rootkit = _int_values(_typed(data, "rootkit", TYPE_DICTIONARY, {}))
 	chat_flags = _bool_values(_typed(data, "chat_flags", TYPE_DICTIONARY, {}))
 	gun_upgrades = _int_values(_typed(data, "gun_upgrades", TYPE_DICTIONARY, {}))
+	current_arena_id = str(_typed(data, "current_arena_id", TYPE_STRING, ""))
 
 
 static func _typed(d: Dictionary, key: String, type: int, default: Variant) -> Variant:

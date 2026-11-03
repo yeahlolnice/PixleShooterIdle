@@ -31,6 +31,8 @@ signal weapon_fired(gun_id: String)
 signal ammo_changed(in_mag: int, mag_size: int)
 ## A gun became the active weapon (buy, death fallback to starter, round start).
 signal gun_equipped(gun_id: String)
+## The player picked another arena (ArenaService.select); Main rebuilds the world.
+signal arena_selected(arena_id: String)
 ## A gun upgrade level was bought (ShopService.buy_upgrade). stat: "damage" / "fire_rate".
 signal gun_upgraded(gun_id: String, stat: String, level: int)
 

@@ -51,6 +51,15 @@ func _run() -> void:
 	Input.action_release("aim")
 	wm.equip("rifle_block47")
 
+	var last_arena: String = DataRegistry.arenas()[-1]["id"]
+	if ArenaService.select(last_arena):
+		await _settle(30)
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		await _snap("arena_" + last_arena)
+		buy.open_menu()
+		await _snap("buy_menu_servers")
+		buy.close_menu()
+
 	var mod := _ui(ModMenu) as ModMenu
 	mod.open_menu()
 	await _snap("mod_menu")
