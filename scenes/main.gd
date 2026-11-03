@@ -9,6 +9,11 @@ extends Node3D
 ## scene turn it off so they never touch the player's real save.
 @export var use_save_file := true
 
+## --dev-cash grants (debug only; not balance data): enough for the first few cheat levels and
+## unlocks Speed Hack, Infinite Ammo, Auto Bhop and Wallhack.
+const DEV_CASH := 50000.0
+const DEV_LIFETIME_KILLS := 400
+
 @onready var arena: Node3D = $Arena
 @onready var player: Player = $Player
 @onready var world_env: WorldEnvironment = $WorldEnvironment
@@ -21,6 +26,13 @@ var spawner: BotSpawner
 
 func _enter_tree() -> void:
 	# Before children's _ready, so WeaponManager equips the saved gun.
+	# --dev-cash (after `--`): QA shortcut, see DECISIONS D42. Never touches the save file.
+	if use_save_file and "--dev-cash" in OS.get_cmdline_user_args():
+		use_save_file = false
+		GameState.new_game()
+		GameState.cash = DEV_CASH
+		GameState.lifetime_kills = DEV_LIFETIME_KILLS
+		CheatSystem.refresh_unlocks(false)
 	if use_save_file and not GameState.persistence_enabled:
 		GameState.enable_persistence()
 
