@@ -7,7 +7,7 @@ extends Node3D
 @export var arena_id := ""
 
 @onready var arena: Node3D = $Arena
-@onready var player: CharacterBody3D = $Player
+@onready var player: Player = $Player
 @onready var world_env: WorldEnvironment = $WorldEnvironment
 
 
@@ -19,6 +19,7 @@ func _ready() -> void:
 	arena.build(arena_def)
 	world_env.environment.background_color = DataRegistry.color(arena_def.get("sky_color", "sky"))
 	if not arena.player_spawns.is_empty():
+		player.spawn_points = arena.player_spawns
 		player.global_position = arena.player_spawns[0]
-	print("[Main] arena '%s' built: %d blocks, %d bot spawns" % [id, arena.block_count(), arena.bot_spawns.size()])
+	print("[Main] arena '%s' built: %d blocks, %d bot spawns, %d navmesh polygons" % [id, arena.block_count(), arena.bot_spawns.size(), arena.nav_polygon_count()])
 	EventBus.player_spawned.emit(player)
