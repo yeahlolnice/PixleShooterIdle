@@ -32,7 +32,7 @@ func _ready() -> void:
 func start(arena: String = "") -> void:
 	arena_id = arena if arena != "" else DataRegistry.first_arena_id()
 	var def := DataRegistry.arena(arena_id)
-	wave_size = int(def.get("bots_per_wave", 0)) + GameState.server_slots
+	wave_size = int(def.get("bots_per_wave", 0)) + CheatSystem.extra_bots()
 	wave_types = def.get("bot_types", [])
 	if tracker:
 		tracker.arena_id = arena_id

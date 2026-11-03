@@ -31,3 +31,7 @@ When the plan is silent, pick the simplest option that fits the design, record i
 | D24 | Input uses physical keycodes | Same physical WASD on non-QWERTY layouts | Architect |
 | D25 | `.gitattributes` forces LF line endings | The factory git config has `core.autocrlf=true`, which would break shell scripts | Architect |
 | D26 | Godot is installed to `~/.local/godot` (symlink `~/.local/bin/godot`); scripts honour `$GODOT` | No root needed in fresh containers | Architect |
+| D27 | Cheat unlocks use **lifetime** kills (not run kills); prestige cheats use `prestige_count` | Task spec; a ban resets levels but should not hide the ladder again | Rex / TASK-009 |
+| D28 | Cheat effect curves: `number` effects go `from` (level 1) → `to` (max_level) on a `linear` or `exp` curve; "absurd" end states (never reload, permanent, whole map) are `bool` flags from a level | Simplest data shape covering every plan row | Rex / TASK-009 |
+| D29 | First purchase of a cheat switches it on; toggles are stored in `GameState.cheat_enabled`; upgrades (Server Slots) cannot be toggled and do not count for legit mode | Simplest; legit mode is about cheats | Rex / TASK-009 |
+| D30 | Starting cheat base costs ≈ 10 × unlock kills (100 … 6M), max levels 10–15; Server Slots 250 base, 10 levels, unlock at 25 kills | Placeholder pacing; tune in balance pass | Rex / TASK-009 |
