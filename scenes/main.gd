@@ -13,6 +13,7 @@ extends Node3D
 
 var tracker: MatchTracker
 var rounds: RoundController
+var spawner: BotSpawner
 
 
 func _ready() -> void:
@@ -36,6 +37,12 @@ func _ready() -> void:
 	rounds.tracker = tracker
 	add_child(rounds)
 	rounds.respawn_requested.connect(_respawn_player)
+	spawner = BotSpawner.new()
+	spawner.name = "BotSpawner"
+	spawner.target = player
+	add_child(spawner)
+	rounds.spawn_wave_requested.connect(_spawn_wave)
+	rounds.clear_bots_requested.connect(_clear_bots)
 	ui_layer.add_child(load("res://ui/hud/hud.tscn").instantiate())
 	var buy_menu: BuyMenu = load("res://ui/buy_menu/buy_menu.tscn").instantiate()
 	buy_menu.weapon_manager = player.get_node_or_null("WeaponManager")
@@ -47,3 +54,14 @@ func _respawn_player() -> void:
 	if not arena.player_spawns.is_empty():
 		player.global_position = arena.player_spawns[randi() % arena.player_spawns.size()]
 	EventBus.player_spawned.emit(player)
+
+
+func _spawn_wave(count: int, _bot_types: Array) -> void:
+	# Spawner sizes the wave from arenas.json + extra slots; keep it in step with the controller.
+	spawner.spawn_wave(rounds.arena_id, count - int(DataRegistry.arena(rounds.arena_id).get("bots_per_wave", 0)))
+
+
+func _clear_bots() -> void:
+	for bot in spawner.get_children():
+		bot.queue_free()
+	spawner.reset_alive()
