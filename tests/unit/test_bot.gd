@@ -108,6 +108,9 @@ func test_spawner_count_from_data_plus_extra_slots() -> void:
 	var bots := spawner.spawn_wave("arena_1", 2)
 	assert_eq(bots.size(), arena["bots_per_wave"] + 2)
 	assert_eq(spawner.alive_count(), bots.size())
+	var spawns: Array = arena["bot_spawns"]
+	for i in bots.size():
+		assert_eq(bots[i]._home, spawns[i % spawns.size()], "home is spawn point")
 	watch_signals(spawner)
 	for b in bots:
 		b.take_hit("body", 9999.0)

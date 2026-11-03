@@ -37,6 +37,7 @@ func spawn_wave(arena_id: String, p_extra_slots: int = -1) -> Array[Bot]:
 		bot.configure(types[i % types.size()], arena_id, target)
 		add_child(bot)
 		bot.global_position = spawns[i % spawns.size()]
+		bot._home = bot.global_position  # _ready ran at the spawner origin
 		bots.append(bot)
 	_alive += bots.size()
 	wave_spawned.emit(bots.size())
