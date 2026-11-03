@@ -64,6 +64,8 @@ sv_airaccelerate, ~12), `air_speed_cap` (m/s; in-air speed cap along the wish di
 | `scoped_spread_mult` | optional ≥ 0 | spread multiplier while scoped (sniper: 0 = pinpoint scoped, wide unscoped) |
 | `model_length_m` | optional metres | viewmodel body length (default 0.3) |
 
+Top-level `upgrades` (optional, TASK-024): `stat -> {name, step, max_level, min_base_cost, cost_mult, cost_growth}` for `damage` and `fire_rate`. Level n multiplies the stat by `1 + step × n`; the next level costs `max(gun price, min_base_cost) × cost_mult × cost_growth^n`. Upgrades are bought for the gun in hand from the buy menu, saved in `GameState.gun_upgrades`, kept through death, reset on ban.
+
 ## bots.json
 ```json
 { "bots": [ { ...bot... } ] }

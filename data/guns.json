@@ -1,5 +1,9 @@
 {
   "starter_gun": "pistol_starter",
+  "upgrades": {
+    "damage": {"name": "Damage", "step": 0.15, "max_level": 5, "min_base_cost": 60, "cost_mult": 0.6, "cost_growth": 1.6},
+    "fire_rate": {"name": "Fire rate", "step": 0.1, "max_level": 5, "min_base_cost": 60, "cost_mult": 0.5, "cost_growth": 1.6}
+  },
   "guns": [
     {
       "id": "pistol_starter",

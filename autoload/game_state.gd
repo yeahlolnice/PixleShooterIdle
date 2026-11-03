@@ -33,6 +33,9 @@ var hax_points: int = 0
 var rootkit: Dictionary = {}
 ## Once-only chat triggers already fired, trigger_id -> true. (TASK-013)
 var chat_flags: Dictionary = {}
+## Bought gun upgrade levels, "<gun_id>:<stat>" -> level. Kept through death
+## (only the gun is lost), reset on prestige. (TASK-024)
+var gun_upgrades: Dictionary = {}
 
 ## True once enable_persistence() ran: autosave at round end and on quit.
 var persistence_enabled := false
@@ -130,6 +133,14 @@ func owns_gun(gun_id: String) -> bool:
 	return owned_guns.has(gun_id)
 
 
+func gun_upgrade_level(gun_id: String, stat: String) -> int:
+	return int(gun_upgrades.get("%s:%s" % [gun_id, stat], 0))
+
+
+func set_gun_upgrade_level(gun_id: String, stat: String, level: int) -> void:
+	gun_upgrades["%s:%s" % [gun_id, stat]] = level
+
+
 ## Death penalty: guns are lost, back to the starter. Cash and kills are kept.
 func clear_loadout() -> void:
 	owned_guns.clear()
@@ -153,6 +164,7 @@ func to_dict() -> Dictionary:
 		"hax_points": hax_points,
 		"rootkit": rootkit.duplicate(true),
 		"chat_flags": chat_flags.duplicate(true),
+		"gun_upgrades": gun_upgrades.duplicate(true),
 	}
 
 
@@ -176,6 +188,7 @@ func from_dict(d: Dictionary) -> void:
 	hax_points = int(_num(data, "hax_points", 0))
 	rootkit = _int_values(_typed(data, "rootkit", TYPE_DICTIONARY, {}))
 	chat_flags = _bool_values(_typed(data, "chat_flags", TYPE_DICTIONARY, {}))
+	gun_upgrades = _int_values(_typed(data, "gun_upgrades", TYPE_DICTIONARY, {}))
 
 
 static func _typed(d: Dictionary, key: String, type: int, default: Variant) -> Variant:

@@ -22,6 +22,7 @@ func _ready() -> void:
 	EventBus.menu_toggled.connect(_on_menu_toggled)
 	EventBus.round_state_changed.connect(_on_round_state)
 	EventBus.player_died.connect(func(_info): equip_starter())
+	EventBus.gun_upgraded.connect(_on_gun_upgraded)
 	var mount := get_node_or_null(mount_path)
 	if mount:
 		_camera = mount.get_parent() as Camera3D
@@ -45,8 +46,16 @@ func equip(gun_id: String) -> String:
 	if aim_owner and aim_owner.has_method("add_aim_kick"):
 		weapon.recoil_kicked.connect(aim_owner.add_aim_kick)
 	weapon.setup(def)
+	apply_upgrades()
 	EventBus.gun_equipped.emit(def["id"])
 	return def["id"]
+
+
+## Sets the weapon's damage / fire-rate multipliers from bought gun upgrades.
+func apply_upgrades() -> void:
+	if weapon:
+		weapon.damage_mult = ShopService.upgrade_mult(weapon.gun_id(), "damage")
+		weapon.fire_rate_mult = ShopService.upgrade_mult(weapon.gun_id(), "fire_rate")
 
 
 ## Scopes in or out. Only guns with zoom_fov zoom; others just stay unscoped.
@@ -65,6 +74,11 @@ func set_aiming(on: bool) -> void:
 
 func is_scoped() -> bool:
 	return weapon != null and weapon.scoped
+
+
+func _on_gun_upgraded(gun_id: String, _stat: String, _level: int) -> void:
+	if weapon and gun_id == weapon.gun_id():
+		apply_upgrades()
 
 
 func _on_round_state(state: StringName, _info: Dictionary) -> void:

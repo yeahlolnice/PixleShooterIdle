@@ -66,6 +66,11 @@ func gun(id: String) -> Dictionary:
 	return _find_by_id(guns(), id)
 
 
+## Gun upgrade tracks (guns.json "upgrades"): stat -> {name, step, max_level, ...}.
+func gun_upgrades() -> Dictionary:
+	return _data.get("guns", {}).get("upgrades", {})
+
+
 ## Id of the free gun every round starts with.
 func starter_gun_id() -> String:
 	return _data.get("guns", {}).get("starter_gun", "")

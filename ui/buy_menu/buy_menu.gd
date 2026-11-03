@@ -18,6 +18,8 @@ var _rows: VBoxContainer
 var _cash_label: Label
 var _feedback: Label
 var _buttons: Dictionary = {}  # gun_id -> Button
+var _upgrade_title: Label
+var _upgrade_buttons: Dictionary = {}  # stat -> Button (upgrades the equipped gun)
 
 
 func _ready() -> void:
@@ -30,24 +32,65 @@ func _ready() -> void:
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 12)
+	box.add_theme_constant_override("separation", 10)
 	center.add_child(box)
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 24)
+	box.add_child(head)
 	var title := Label.new()
 	title.text = "BUY MENU  (B to close)"
-	title.add_theme_font_size_override("font_size", 28)
-	box.add_child(title)
+	title.add_theme_font_size_override("font_size", 26)
+	head.add_child(title)
 	_cash_label = Label.new()
-	box.add_child(_cash_label)
+	_cash_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	head.add_child(_cash_label)
 	_rows = VBoxContainer.new()
 	_rows.add_theme_constant_override("separation", 6)
 	box.add_child(_rows)
+	box.add_child(_build_upgrade_row())
 	_feedback = Label.new()
 	box.add_child(_feedback)
 	_build_buttons()
 	EventBus.round_state_changed.connect(_on_round_state)
 	EventBus.cash_changed.connect(func(_t, _d): _refresh())
 	EventBus.gun_equipped.connect(func(_id): _refresh())
+	EventBus.gun_upgraded.connect(func(_id, _s, _l): _refresh())
 	EventBus.kills_changed.connect(func(_k, _l): _refresh())
+
+
+## "UPGRADE <gun>:" + one button per guns.json upgrade stat, for the gun in hand.
+func _build_upgrade_row() -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	_upgrade_title = Label.new()
+	_upgrade_title.custom_minimum_size = Vector2(240, 0)
+	_upgrade_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	row.add_child(_upgrade_title)
+	for stat in ShopService.upgrade_stats():
+		var b := Button.new()
+		b.custom_minimum_size = Vector2(230, 40)
+		b.add_theme_font_size_override("font_size", 13)
+		b.pressed.connect(_buy_upgrade.bind(stat))
+		row.add_child(b)
+		_upgrade_buttons[stat] = b
+	return row
+
+
+func _buy_upgrade(stat: String) -> void:
+	var r := ShopService.buy_upgrade(ShopService.equipped_id(), stat)
+	_feedback.text = "Upgraded!" if r == ShopService.Result.OK else ShopService.message(r)
+	_refresh()
+
+
+## Text of one upgrade button, e.g. "Damage Lv1/5  +15%  $90" or "Damage MAX".
+static func upgrade_text(gun_id: String, stat: String) -> String:
+	var def: Dictionary = DataRegistry.gun_upgrades().get(stat, {})
+	var lvl := ShopService.upgrade_level(gun_id, stat)
+	var max_lvl := int(def.get("max_level", 0))
+	if lvl >= max_lvl:
+		return "%s MAX (+%d%%)" % [def.get("name", stat), roundi((ShopService.upgrade_mult(gun_id, stat) - 1.0) * 100.0)]
+	return "%s Lv%d/%d  +%d%%  %s" % [def.get("name", stat), lvl, max_lvl,
+		roundi(float(def.get("step", 0.0)) * 100.0), Fmt.cash(ShopService.upgrade_cost(gun_id, stat))]
 
 
 func _build_buttons() -> void:
@@ -162,3 +205,9 @@ func _refresh() -> void:
 		b.tooltip_text = ShopService.message(r)
 		var need := int(DataRegistry.gun(id).get("unlock_kills", 0))
 		b.text = String(b.get_meta("label")) + ("\nneeds %s kills" % Fmt.number(need) if r == ShopService.Result.LOCKED else "")
+	var held := ShopService.equipped_id()
+	_upgrade_title.text = "UPGRADE %s:" % String(DataRegistry.gun(held).get("name", held)).to_upper()
+	for stat in _upgrade_buttons:
+		var ub: Button = _upgrade_buttons[stat]
+		ub.text = upgrade_text(held, stat)
+		ub.disabled = ShopService.check_upgrade(held, stat) != ShopService.Result.OK

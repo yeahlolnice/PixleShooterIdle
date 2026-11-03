@@ -38,6 +38,9 @@ var gun: Dictionary = {}
 var state: State = State.READY
 var ammo: int = 0
 var modifiers := {"mag_mult": 1.0, "recoil_mult": 1.0, "spread_mult": 1.0, "infinite_reload": false, "force_headshot": false}
+## Gun upgrade multipliers (ShopService, TASK-024); WeaponManager sets them.
+var damage_mult := 1.0
+var fire_rate_mult := 1.0
 ## Extra spread from sustained fire (degrees), see bloom_* fields.
 var bloom := 0.0
 ## True while aiming down the scope (set by WeaponManager).
@@ -113,7 +116,12 @@ func reload_time() -> float:
 
 
 func fire_interval() -> float:
-	return 1.0 / float(gun.get("fire_rate", 1.0))
+	return 1.0 / (float(gun.get("fire_rate", 1.0)) * fire_rate_mult)
+
+
+## Damage per hit (per pellet) after gun upgrades.
+func damage() -> float:
+	return float(gun.get("damage", 0.0)) * damage_mult
 
 
 func is_auto() -> bool:
@@ -274,18 +282,18 @@ func _hitscan() -> Dictionary:
 	if collider is Area3D:
 		var headshot: bool = bool(collider.get_meta("headshot", false)) or collider.get_meta("hit_kind", "") == "head" \
 				or bool(modifiers.get("force_headshot", false))
-		var damage := float(gun["damage"]) * (float(gun["headshot_mult"]) if headshot else 1.0)
+		var dealt := damage() * (float(gun["headshot_mult"]) if headshot else 1.0)
 		result["headshot"] = headshot
-		result["damage"] = damage
+		result["damage"] = dealt
 		var bot: Object = collider.get_meta("bot") if collider.has_meta("bot") else null
 		if bot and bot.has_method("take_hit"):  # Bot hitboxes: Bot applies the headshot multiplier itself
-			bot.take_hit("head" if headshot else "body", float(gun["damage"]), gun_id(), float(gun["headshot_mult"]))
+			bot.take_hit("head" if headshot else "body", damage(), gun_id(), float(gun["headshot_mult"]))
 			return result
 		var target: Node = collider
 		while target and not target.has_method("apply_damage"):
 			target = target.get_parent()
 		if target:
-			target.apply_damage(damage, {"headshot": headshot, "gun_id": gun_id(), "position": ray["position"]})
+			target.apply_damage(dealt, {"headshot": headshot, "gun_id": gun_id(), "position": ray["position"]})
 	return result
 
 

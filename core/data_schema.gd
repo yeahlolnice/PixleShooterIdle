@@ -50,6 +50,19 @@ const _GUN := {
 		"zoom_fov", "scoped_spread_mult", "model_length_m"],
 }
 
+## Per-gun upgrade track (guns.json "upgrades", TASK-024).
+const _GUN_UPGRADE := {
+	"type": "object",
+	"fields": {
+		"name": {"type": "string"},
+		"step": _NUM_POS,
+		"max_level": {"type": "int", "min": 1},
+		"min_base_cost": _NUM_NONNEG,
+		"cost_mult": _NUM_NONNEG,
+		"cost_growth": _NUM_POS,
+	},
+}
+
 const _BOT := {
 	"type": "object",
 	"fields": {
@@ -226,8 +239,10 @@ const FILES := {
 		"type": "object",
 		"fields": {
 			"starter_gun": {"type": "string"},
+			"upgrades": {"type": "map", "values": _GUN_UPGRADE},
 			"guns": {"type": "array", "items": _GUN, "min_items": 1},
 		},
+		"optional": ["upgrades"],
 	},
 	"bots": {
 		"type": "object",

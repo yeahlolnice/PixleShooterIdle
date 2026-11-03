@@ -131,7 +131,7 @@ scale. Waiting on the human Gate 2 sign-off (see BUILD_NOTES.md).
 
 | ID | Ticket | Size | Acceptance |
 |---|---|---|---|
-| TASK-032 | Prestige "Get Banned": ban screen (fake VAC-style parody), reset rules per D-log, Hax Points = ⌊√(lifetime/1000)⌋, `prestige` chat event | L | Test: ban resets cash/guns/cheats/slots/run kills, keeps lifetime + Hax Points |
+| TASK-032 | Prestige "Get Banned": ban screen (fake VAC-style parody), reset rules per D-log, Hax Points = ⌊√(lifetime/1000)⌋, `prestige` chat event | L | Test: ban resets cash/guns/gun upgrades/cheats/slots/run kills, keeps lifetime + Hax Points |
 | TASK-033 | Rootkit perk shop (`rootkit.json`): global cash ×, starting cheat levels, cheaper guns, starting cash | M (needs 032) | Test: each perk changes the next run |
 | TASK-034 | Heavy bot (high HP, slow, armour on body so headshots matter) | M | Test: body damage reduced |
 | TASK-035 | Mods (anti-cheat bots): hunt the player, on hit suspend a random active cheat for 30 s; immune to Aimbot/Triggerbot/Spinbot lock and Hitbox Expander, so they must be killed by hand; `mod_spawned` chat; CheatSystem `suspend(id, s)` API shown in mod menu + HUD | L | Tests: suspend/resume; aimbot ignores Mods; manual kill clears suspension |
