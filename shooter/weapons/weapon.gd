@@ -207,10 +207,14 @@ func _hitscan() -> Dictionary:
 	result["position"] = ray["position"]
 	var collider: Object = ray["collider"]
 	if collider is Area3D:
-		var headshot := bool(collider.get_meta("headshot", false))
+		var headshot: bool = bool(collider.get_meta("headshot", false)) or collider.get_meta("hit_kind", "") == "head"
 		var damage := float(gun["damage"]) * (float(gun["headshot_mult"]) if headshot else 1.0)
 		result["headshot"] = headshot
 		result["damage"] = damage
+		var bot: Object = collider.get_meta("bot") if collider.has_meta("bot") else null
+		if bot and bot.has_method("take_hit"):  # Bot hitboxes: Bot applies the headshot multiplier itself
+			bot.take_hit("head" if headshot else "body", float(gun["damage"]), gun_id(), float(gun["headshot_mult"]))
+			return result
 		var target: Node = collider
 		while target and not target.has_method("apply_damage"):
 			target = target.get_parent()

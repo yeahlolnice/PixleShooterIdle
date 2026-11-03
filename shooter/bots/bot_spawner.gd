@@ -54,3 +54,8 @@ func _on_bot_killed(bot: Node, _info: Dictionary) -> void:
 	_alive = maxi(0, _alive - 1)
 	if _alive == 0:
 		wave_cleared.emit()
+
+
+## Forget remaining bots (the caller frees them), e.g. at round end.
+func reset_alive() -> void:
+	_alive = 0
