@@ -5,6 +5,9 @@ extends Node3D
 
 ## Arena to load; empty = the first arena in progression order.
 @export var arena_id := ""
+## Load user://save.json on start and autosave. Tests that instantiate this
+## scene turn it off so they never touch the player's real save.
+@export var use_save_file := true
 
 @onready var arena: Node3D = $Arena
 @onready var player: Player = $Player
@@ -14,6 +17,12 @@ extends Node3D
 var tracker: MatchTracker
 var rounds: RoundController
 var spawner: BotSpawner
+
+
+func _enter_tree() -> void:
+	# Before children's _ready, so WeaponManager equips the saved gun.
+	if use_save_file and not GameState.persistence_enabled:
+		GameState.enable_persistence()
 
 
 func _ready() -> void:
@@ -48,6 +57,7 @@ func _ready() -> void:
 	buy_menu.weapon_manager = player.get_node_or_null("WeaponManager")
 	ui_layer.add_child(buy_menu)
 	ui_layer.add_child(load("res://ui/chat/chat_box.tscn").instantiate())
+	ui_layer.add_child(load("res://ui/mod_menu/mod_menu.tscn").instantiate())
 	rounds.start(id)
 
 
