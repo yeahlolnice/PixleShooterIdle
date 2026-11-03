@@ -22,6 +22,7 @@ DataRegistry="*res://autoload/data_registry.gd"
 GameState="*res://autoload/game_state.gd"
 SteamService="*res://autoload/steam_service.gd"
 CheatSystem="*res://cheats/cheat_system.gd"
+ChatSystem="*res://autoload/chat_system.gd"
 
 [display]
 

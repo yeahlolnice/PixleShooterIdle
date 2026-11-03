@@ -107,7 +107,7 @@ Neutral (off/unowned) values: `false` for bools, `1.0` for player/weapon multipl
 cheat/game values. Each player/weapon modifier key belongs to one cheat only.
 Speed Hack, Infinite Ammo and Auto Bhop name scripts in `cheats/`. Auto Bhop's `cheat` effects
 (`hop_speed_gain`, `max_hop_speed_mult`, `uncapped`) are handed to `Player.set_bhop()` by its
-`apply()` and cleared by `remove()`; see DECISIONS D37–D38.
+`apply()` and cleared by `remove()`; see DECISIONS D39–D40.
 Server Slots' level is stored in `GameState.server_slots`; its `extra_bots` effect is added to
 `arenas.json bots_per_wave` by RoundController via `CheatSystem.extra_bots()`.
 
@@ -117,8 +117,25 @@ Server Slots' level is stored in `GameState.server_slots`; its `extra_bots` effe
 `shaders/wallhack_outline.gdshader` as `next_pass` on their part materials (neon from palette.json).
 The range check runs on a 0.2 s timer, not per frame.
 
-## Coming in later tickets
-`chat.json` (TASK-013: triggers, channel, once flag, delay, lines with `{placeholders}`).
+## chat.json
+Every chat line and chat UI string. Read by the `ChatSystem` autoload.
+| Key | Type | Meaning |
+|---|---|---|
+| `channels.<id>` | `{sender, color, format}` | `system` / `seller` / `bot`. `sender` is the shown name (`""` = random from `bot_names`), `color` a palette name, `format` the display line with `{sender}` and `{text}` |
+| `ui.<key>` | string | chat UI labels (`log_title`, `mute_bots`) |
+| `box.visible_lines` | int ≥ 1 | lines kept in the corner box |
+| `box.fade_after_s` / `fade_time_s` | seconds | a corner line starts fading after / fades over |
+| `box.log_max_lines` | int ≥ 1 | history kept for the scrollable log |
+| `bot_names` | string[] | random senders for bot lines |
+| `triggers[]` | object | see below |
+
+Trigger fields: `id` (unique), `event` (an event name, see ARCHITECTURE.md §3 "chat events"),
+`channel`, `once` (bool: fire once per save), `delay_s`, `lines` (one is picked at random).
+Optional: `once_key` (flag name with placeholders, e.g. `"unlock_{cheat_id}"` = once per cheat; default
+`id`), `when` (`{payload_key: "value"}`, all must match, compared as text), `chance` (0–1), `sender`
+(overrides the channel sender). `{key}` in lines is replaced by payload values (whole numbers print
+without `.0`); `{cheat_name}` is derived from `cheat_id` (cheats.json `name`, else "Speed Hack" from
+`speed_hack`). Unknown placeholders are left as written.
 
 ## Bot hit chance (TASK-003)
 
