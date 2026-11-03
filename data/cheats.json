@@ -4,6 +4,7 @@
   "cheats": [
     {
       "id": "speed_hack",
+      "script": "res://cheats/speed_hack.gd",
       "name": "Speed Hack",
       "tab": "Movement",
       "order": 1,
@@ -16,6 +17,7 @@
     },
     {
       "id": "infinite_ammo",
+      "script": "res://cheats/infinite_ammo.gd",
       "name": "Infinite Ammo",
       "tab": "Combat",
       "order": 2,
@@ -29,6 +31,7 @@
     },
     {
       "id": "auto_bhop",
+      "script": "res://cheats/auto_bhop.gd",
       "name": "Auto Bhop",
       "tab": "Movement",
       "order": 3,
@@ -37,6 +40,7 @@
       "max_level": 10,
       "effects": [
         {"key": "hop_speed_gain", "target": "cheat", "type": "number", "from": 0.0, "to": 0.15, "curve": "linear"},
+        {"key": "max_hop_speed_mult", "target": "cheat", "type": "number", "from": 1.2, "to": 2.5, "curve": "linear"},
         {"key": "uncapped", "target": "cheat", "type": "bool", "from_level": 10}
       ]
     },

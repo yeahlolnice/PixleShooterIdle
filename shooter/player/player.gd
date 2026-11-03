@@ -12,6 +12,14 @@ extends CharacterBody3D
 ## Modifiers are multipliers stored in `stat_mods` keyed "<stat>_mult". Stats:
 ## move_speed, ground_accel, air_accel, jump_velocity, max_health. Setting a
 ## mod never touches the raw tuning, so clearing it restores base stats exactly.
+##
+## Auto Bhop hook (only the auto_bhop cheat calls these):
+##   set_bhop({"hop_speed_gain": 0.05, "max_hop_speed_mult": 1.5, "uncapped": false})
+##   clear_bhop()                            # plain jumping again
+## Without it a jump needs a fresh press of jump; with it, holding jump hops on
+## every landing frame, ground friction is skipped on that frame, each hop adds
+## hop_speed_gain of the horizontal speed (up to effective move_speed *
+## max_hop_speed_mult unless uncapped) and air strafing keeps the speed.
 
 signal health_changed(health: float, max_health: float)
 
@@ -19,6 +27,8 @@ signal health_changed(health: float, max_health: float)
 var tuning: Dictionary = {}
 ## Multiplier modifiers, see header. Read-only for everything but the API above.
 var stat_mods: Dictionary = {}
+## Auto Bhop settings, see header. Empty = off.
+var bhop: Dictionary = {}
 var health := 0.0
 var is_dead := false
 ## World positions to respawn at; Main assigns the arena's player spawns.
@@ -74,6 +84,33 @@ func effective(stat: StringName) -> float:
 	return float(tuning.get(stat, 0.0)) * get_stat_mod(StringName(String(stat) + "_mult"))
 
 
+# --- Auto Bhop ------------------------------------------------------------------
+
+func set_bhop(settings: Dictionary) -> void:
+	bhop = settings.duplicate()
+
+
+func clear_bhop() -> void:
+	bhop = {}
+
+
+func has_bhop() -> bool:
+	return not bhop.is_empty()
+
+
+## Horizontal speed after one hop that starts at `speed`. Never slows the
+## player: a speed already above the cap (e.g. after a level change) is kept.
+func hop_speed(speed: float) -> float:
+	var gain := float(bhop.get("hop_speed_gain", 0.0))
+	if gain <= 0.0 or speed <= 0.0:
+		return speed
+	var boosted := speed * (1.0 + gain)
+	if bool(bhop.get("uncapped", false)):
+		return boosted
+	var cap := effective(&"move_speed") * float(bhop.get("max_hop_speed_mult", 1.0))
+	return minf(boosted, maxf(cap, speed))
+
+
 # --- Input ----------------------------------------------------------------------
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -111,27 +148,41 @@ func _physics_process(delta: float) -> void:
 	if input_enabled:
 		var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 		wish = global_transform.basis * Vector3(input.x, 0.0, input.y)
-		jump_pressed = Input.is_action_pressed("jump")
+		# Holding jump only re-jumps with Auto Bhop; otherwise each hop needs a press.
+		jump_pressed = Input.is_action_pressed("jump") if has_bhop() else Input.is_action_just_pressed("jump")
 	step_movement(delta, wish, jump_pressed)
 	if global_position.y < float(tuning.get("fall_kill_y", -20.0)):
 		take_damage(health, null)
 
 
 ## One movement tick. `wish` is a world-space direction (length <= 1).
+## `jump_pressed` means "jump this tick if on the floor".
 ## Split out from _physics_process so tests can drive it without input.
 func step_movement(delta: float, wish: Vector3, jump_pressed: bool) -> void:
 	var on_floor := is_on_floor()
+	var horizontal := Vector3(velocity.x, 0.0, velocity.z)
 	if not on_floor:
 		velocity.y -= float(tuning.get("gravity", 16.0)) * delta
 	elif jump_pressed:
+		# Jumping on the landing frame leaves on_floor false, so ground friction
+		# and ground accel are skipped this tick and hop speed carries over.
 		velocity.y = effective(&"jump_velocity")
 		on_floor = false
+		if has_bhop():
+			var speed := horizontal.length()
+			if speed > 0.0:
+				horizontal *= hop_speed(speed) / speed
 
-	var horizontal := Vector3(velocity.x, 0.0, velocity.z)
 	var accel := effective(&"ground_accel" if on_floor else &"air_accel")
 	if wish.length_squared() > 0.0001:
 		var target := wish.normalized() * effective(&"move_speed") * minf(wish.length(), 1.0)
-		horizontal = horizontal.move_toward(target, accel * delta)
+		var speed := horizontal.length()
+		if has_bhop() and not on_floor and speed > target.length() and horizontal.dot(target) > 0.0:
+			# Bhop air strafe: steer toward the wish direction without bleeding speed.
+			horizontal = horizontal.move_toward(target.normalized() * speed, accel * delta)
+			horizontal = horizontal.normalized() * speed
+		else:
+			horizontal = horizontal.move_toward(target, accel * delta)
 	elif on_floor:
 		horizontal = horizontal.move_toward(Vector3.ZERO, float(tuning.get("ground_friction", 40.0)) * delta)
 	velocity.x = horizontal.x

@@ -92,6 +92,8 @@ func set_modifier(key: String, value: Variant) -> void:
 	if key == "mag_mult":
 		ammo = mini(ammo, mag_size())
 		EventBus.ammo_changed.emit(ammo, mag_size())
+	elif key == "infinite_reload" and value and state == State.RELOADING:
+		_finish_reload()
 
 
 func reset_modifiers() -> void:
