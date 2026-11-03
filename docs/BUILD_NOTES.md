@@ -24,6 +24,48 @@ under 2 minutes.
 - ...
 -->
 
+## Build 2026-11-03 — Phase 2 Cheat core (TASK-008..014) — GATE: "Do cheats feel good?"
+
+**What changed**
+- Mod menu (Insert / F1, slows time to 0.2× while open), save/load (autosave after each round and on quit),
+  chat system (SYSTEM tutorial lines + shady seller DMs), and four cheats: Speed Hack, Infinite Ammo,
+  Auto Bhop, Wallhack. Cheats are toggleable; the first purchase switches the cheat on.
+- QA: `tests/integration/test_cheat_core_loop.gd` covers kills → unlock at 10 → buy → effect → save → reload
+  (still owned + enabled, effect re-applied, tutorial chat not repeated) and time-scale restore after the menu closes.
+
+**Pacing check (against data/economy.json + cheats.json)**
+- Speed Hack: unlocks at 10 kills, costs 100. Base kill = 10 cash, streak +10% per kill (cap ×2), so 10 kills
+  without dying pay 145 (100 with no streak, i.e. dying between every kill). It is affordable the moment it unlocks.
+- Needed rate for "first cheat in under 2 minutes": 10 kills in 120 s = **5 kills/min** (one kill per 12 s).
+  A live round lasts 120 s with 7 bots, so one round is enough; first cheat lands in round 1 with a bit of slack.
+- Infinite Ammo: 50 kills, costs 500. After buying Speed Hack, 50 kills earn ~500–1000 cash depending on
+  streaks, so roughly rounds 3–5. Auto Bhop (150 kills, 1500) and Wallhack (400 kills, 4000) follow the same ~10× per cheat.
+  Values are placeholders (D30); Gate 2 is where we find out if they feel right.
+
+**Test it in under 2 minutes (script)**
+1. `tools/install_godot.sh` once, then `godot --path . -- --dev-cash` (D42: 50,000 cash, 400 lifetime kills,
+   all four cheats unlocked, the save file is neither read nor written). Without the flag you play the real 10-kill path.
+2. 0:00 Freeze time: read the chat (WASD hint, B for buy menu). Press **Insert** → mod menu opens, the world slows. Press Insert again → speed returns to normal.
+3. 0:15 Buy **Speed Hack**, then **Infinite Ammo**, **Auto Bhop**, **Wallhack** (one level each). Read the seller DMs.
+4. 0:40 Round goes live. Run around, shoot a bot, hold jump while moving to bhop. Toggle each cheat off/on in the menu to compare.
+5. 1:30 Upgrade each cheat 2–3 levels and note whether each upgrade is noticeable.
+6. 1:50 Close the game and relaunch **without** `--dev-cash` to check a normal save loads (cheats stay owned and enabled, tutorial lines don't repeat).
+
+**Feel questions**
+- Speed Hack: is level 1 (+10%) noticeable? Is level 5 (~+45%) fun or does it make aiming hard? Does toggling off feel like a clear downgrade?
+- Infinite Ammo: do the bigger magazines (2× at L1) change how you shoot? Is the cost/benefit right vs. buying a gun?
+- Auto Bhop: does holding jump feel smooth? Does speed build in a readable way, and is the cap (1.2× → 2.5×) visible?
+- Wallhack: are outlines readable through walls without being noisy? Does range growth matter, and are bots easier to track?
+- Mod menu: is the slow-motion on open welcome or annoying? Are prices and unlock lines clear?
+- Chat: do the SYSTEM and seller lines teach the game without feeling intrusive? Is the order of purchase lines sensible?
+- Pace: did the first cheat arrive in about 2 minutes? Does the 2nd–4th cheat gap feel like a grind or a goal?
+
+**Known issues / not verified**
+- Headless only: no one has looked at the mod menu, wallhack shader or chat box in a windowed build, nor tested real mouse/keyboard input.
+- Windows export builds but the Windows binary has not been run (no Windows host).
+- The earlier AMMO "∞" HUD bug from the Gate 1 notes may still be present.
+
+
 ## Build 2026-11-03 — TASK-013 chat system (Phase 2, not a gate build)
 
 **What changed**
