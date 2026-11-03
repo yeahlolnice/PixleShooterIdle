@@ -221,6 +221,9 @@ Owns the 12 cheats and mod-menu upgrades (Server Slots) as `CheatBase` resources
   per block, palette material) and one `Collision` StaticBody3D (WORLD layer) with a box shape per
   block; exposes `player_spawns`, `bot_spawns: Array[Vector3]`, `block_count()`, signal `built(id)`.
   TASK-002 adds merged meshes and a runtime `NavigationRegion3D` bake.
+- `shooter/loot/`: `LootDropper` (child of Main; listens to `bot_killed`, drops bonus cash per
+  economy.json `loot`) and `LootPickup` (group "loot", parented to the BotSpawner so round-end
+  cleanup frees it; pays `GameState.add_cash` when the player is close; Loot Magnet pulls it).
 
 ### Physics layers (`core/layers.gd`)
 | Bit | Name | Used by |

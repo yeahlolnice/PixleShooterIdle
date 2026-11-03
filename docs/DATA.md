@@ -26,6 +26,10 @@ section here. Files without a schema still load (raw, via `DataRegistry.get_file
 | `round.freeze_time_s` / `live_time_s` / `summary_time_s` | seconds | round phase lengths |
 | `mod_menu_time_scale` | 0 < x ≤ 1 | `Engine.time_scale` while the mod menu is open |
 | `legit_mode.coin_chance` / `coin_value` | 0–1 / cash | all-cheats-off bonus per kill (Phase 4) |
+| `loot.drop_chance` | 0–1 | chance a kill drops a bonus-cash pickup (`shooter/loot/`) |
+| `loot.cash_mult` | number ≥ 0 | pickup value = this × that kill's cash (paid on top of the kill reward) |
+| `loot.lifetime_s` / `pickup_radius_m` | s / m | pickup vanishes after / is collected within this distance of the player |
+| `loot.magnet_speed_m_s` | m/s | how fast Loot Magnet pulls pickups in |
 | `hax_points.kills_divisor` | number > 0 | `floor(sqrt(lifetime_kills / divisor))` |
 
 ## player.json
@@ -116,7 +120,37 @@ Server Slots' level is stored in `GameState.server_slots`; its `extra_bots` effe
 `radius_m` is the outline range around the player; `whole_map` (max level) makes it unlimited;
 `health_bars` shows a bar above outlined bots from that level. Bots in range get
 `shaders/wallhack_outline.gdshader` as `next_pass` on their part materials (neon from palette.json).
-The range check runs on a 0.2 s timer, not per frame.
+The range check runs on a 0.2 s timer, not per frame. Bots freed or queued for deletion (round end)
+are dropped from the outline set without being touched.
+
+### Aimbot, Triggerbot, Spinbot (`cheats/aimbot.gd`, `triggerbot.gd`, `spinbot.gd`)
+All three extend `DriverCheat` (`cheats/driver_cheat.gd`): `apply()` puts a `<Id>Driver` node under
+the player that runs each physics tick while the player is alive with no menu open. Targets are
+live bots whose head (`Head` mesh) the camera can see (`cheats/cheat_targeting.gd`, line of sight on
+the world layer only). Cheat shots go through `WeaponManager.cheat_fire()` (fire rate, ammo, menus,
+freeze time all apply).
+- Aimbot: `fov_deg` = max angle off the crosshair to lock (180 = anywhere); `snap_speed` = fraction
+  of the remaining angle turned per physics tick (1 = snap); `instant_headshot` (max) sets the
+  weapon's `force_headshot` modifier so every bot hit counts as a headshot.
+- Triggerbot: `delay_s` = how long the crosshair must stay on the same bot before it fires.
+- Spinbot: `spin_interval_s` = time between snap-and-shoot to the nearest visible bot in any
+  direction; `constant_fire` (max) stays locked and fires whenever the gun allows.
+
+### Hitbox Expander (`cheats/hitbox_expander.gd`)
+`head_scale` multiplies every bot's head hitbox (`Bot.HEAD_SIZE`; the head mesh is unchanged). It is
+the static `Bot.head_hitbox_scale`, so bots spawned later use it too; `remove()` resets it to 1.
+
+### God Mode, Noclip, Loot Magnet (`cheats/god_mode.gd`, `noclip.gd`, `loot_magnet.gd`)
+- God Mode: `invuln_after_kill_s` = invulnerability after each kill (does not stack; the longer
+  of what is left and the new grant wins); `permanent` (max) ignores all damage. Falling below
+  `player.json fall_kill_y` still kills. Handed to `Player.set_god_mode()`.
+- Noclip: the `noclip` action (V) toggles flight (no gravity or world collision, fly where you look,
+  hold jump to rise). `burst_s` = flight seconds per round, refilled at freeze time;
+  `max_wall_thickness_m` = deepest geometry one pass may go through (plus the body's own size);
+  `unlimited_flight` (max) = no time limit. Flight never ends inside geometry. Handed to
+  `Player.set_noclip()`.
+- Loot Magnet: `radius_m` = loot within this distance of the player is pulled in at
+  `economy.json loot.magnet_speed_m_s`. Loot itself: see economy.json `loot` above.
 
 ## chat.json
 Every chat line and chat UI string. Read by the `ChatSystem` autoload.

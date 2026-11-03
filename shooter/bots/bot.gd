@@ -16,6 +16,11 @@ const TARGET_AIM_HEIGHT := 1.1   ## where bots aim on the player (chest)
 const TRACER_LIFETIME_S := 0.12
 const POP_PARTICLES := 8
 const POP_TIME_S := 0.35
+const HEAD_SIZE := Vector3(0.5, 0.5, 0.5)
+
+## Head hitbox size multiplier for every bot; only the Hitbox Expander cheat sets
+## it. Static so bots spawned later pick it up too. The head mesh never changes.
+static var head_hitbox_scale := 1.0
 
 var bot_id := "grunt"
 var arena_id := ""
@@ -31,6 +36,7 @@ var _fire_cooldown := 0.0
 var _wander_pause := 0.0
 var _rng := RandomNumberGenerator.new()
 var _built := false
+var _head_shape: BoxShape3D
 
 
 ## Resolves the stat block for a bot type in an arena (bots.json x arena multipliers).
@@ -321,10 +327,22 @@ func _build_body() -> void:
 	add_child(shape)
 	# Torso + legs share the body hitbox; the cube head has its own.
 	_add_part("Body", Vector3(0.7, 1.2, 0.4), Vector3(0, 0.6, 0), body_color, "body")
-	_add_part("Head", Vector3(0.5, 0.5, 0.5), Vector3(0, 1.45, 0), head_color, "head")
+	_head_shape = _add_part("Head", HEAD_SIZE, Vector3(0, 1.45, 0), head_color, "head")
+	apply_head_hitbox_scale()
 
 
-func _add_part(part_name: String, size: Vector3, pos: Vector3, color_name: String, kind: String) -> void:
+## Resizes the head hitbox to HEAD_SIZE * head_hitbox_scale (Hitbox Expander).
+func apply_head_hitbox_scale() -> void:
+	if _head_shape:
+		_head_shape.size = HEAD_SIZE * head_hitbox_scale
+
+
+func head_hitbox_size() -> Vector3:
+	return _head_shape.size if _head_shape else Vector3.ZERO
+
+
+## Builds one visible box and its matching hitbox; returns the hitbox shape.
+func _add_part(part_name: String, size: Vector3, pos: Vector3, color_name: String, kind: String) -> BoxShape3D:
 	var mi := MeshInstance3D.new()
 	mi.name = part_name
 	var mesh := BoxMesh.new()
@@ -346,6 +364,7 @@ func _add_part(part_name: String, size: Vector3, pos: Vector3, color_name: Strin
 	cs.shape = box
 	area.add_child(cs)
 	add_child(area)
+	return box
 
 
 func _material(color_name: String) -> StandardMaterial3D:

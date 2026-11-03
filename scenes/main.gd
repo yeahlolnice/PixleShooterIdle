@@ -64,6 +64,11 @@ func _ready() -> void:
 	add_child(spawner)
 	rounds.spawn_wave_requested.connect(_spawn_wave)
 	rounds.clear_bots_requested.connect(_clear_bots)
+	var loot := LootDropper.new()
+	loot.name = "LootDropper"
+	loot.tracker = tracker
+	loot.container = spawner   # _clear_bots frees leftover loot with the bots
+	add_child(loot)
 	ui_layer.add_child(load("res://ui/hud/hud.tscn").instantiate())
 	var buy_menu: BuyMenu = load("res://ui/buy_menu/buy_menu.tscn").instantiate()
 	buy_menu.weapon_manager = player.get_node_or_null("WeaponManager")
@@ -84,6 +89,7 @@ func _spawn_wave(count: int, _bot_types: Array) -> void:
 	spawner.spawn_wave(rounds.arena_id, count - int(DataRegistry.arena(rounds.arena_id).get("bots_per_wave", 0)))
 
 
+## Frees bots, tracers, pop debris and leftover loot (all parented to the spawner).
 func _clear_bots() -> void:
 	for bot in spawner.get_children():
 		bot.queue_free()

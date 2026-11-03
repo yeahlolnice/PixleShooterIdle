@@ -4,7 +4,8 @@ extends Node3D
 ##
 ## The magazine/reload/cooldown state machine is plain code advanced by tick(),
 ## so tests run it without a scene tree. Cheats change the gun only through
-## `modifiers` (mag_mult, recoil_mult, spread_mult, infinite_reload).
+## `modifiers` (mag_mult, recoil_mult, spread_mult, infinite_reload,
+## force_headshot = every bot hit counts as a headshot, set by Aimbot at max).
 ##
 ## Hitbox contract (bots, TASK-003): hitboxes are Area3D on Layers.HITBOXES.
 ## A head hitbox has meta "headshot" = true. The raycast walks up from the hit
@@ -24,7 +25,7 @@ const MUZZLE_FLASH_S := 0.05
 var gun: Dictionary = {}
 var state: State = State.READY
 var ammo: int = 0
-var modifiers := {"mag_mult": 1.0, "recoil_mult": 1.0, "spread_mult": 1.0, "infinite_reload": false}
+var modifiers := {"mag_mult": 1.0, "recoil_mult": 1.0, "spread_mult": 1.0, "infinite_reload": false, "force_headshot": false}
 
 var _cooldown: float = 0.0
 var _reload_left: float = 0.0
@@ -98,6 +99,7 @@ func reset_modifiers() -> void:
 	for key in ["mag_mult", "recoil_mult", "spread_mult"]:
 		modifiers[key] = 1.0
 	modifiers["infinite_reload"] = false
+	modifiers["force_headshot"] = false
 	ammo = mini(ammo, mag_size())
 
 
@@ -203,7 +205,8 @@ func _hitscan() -> Dictionary:
 	result["position"] = ray["position"]
 	var collider: Object = ray["collider"]
 	if collider is Area3D:
-		var headshot: bool = bool(collider.get_meta("headshot", false)) or collider.get_meta("hit_kind", "") == "head"
+		var headshot: bool = bool(collider.get_meta("headshot", false)) or collider.get_meta("hit_kind", "") == "head" \
+				or bool(modifiers.get("force_headshot", false))
 		var damage := float(gun["damage"]) * (float(gun["headshot_mult"]) if headshot else 1.0)
 		result["headshot"] = headshot
 		result["damage"] = damage

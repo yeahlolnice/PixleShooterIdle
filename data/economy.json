@@ -17,6 +17,13 @@
     "coin_chance": 0.5,
     "coin_value": 1
   },
+  "loot": {
+    "drop_chance": 0.5,
+    "cash_mult": 0.5,
+    "lifetime_s": 20,
+    "pickup_radius_m": 1.2,
+    "magnet_speed_m_s": 15
+  },
   "hax_points": {
     "kills_divisor": 1000
   }

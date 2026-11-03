@@ -57,7 +57,7 @@ func select_bots(origin: Vector3, bots: Array, level: int) -> Array:
 	var live: Array = []
 	var positions: Array = []
 	for bot in bots:
-		if not (is_instance_valid(bot) and bot is Node3D):
+		if not (is_instance_valid(bot) and bot is Node3D) or bot.is_queued_for_deletion():
 			continue
 		if bot.has_method("is_dead") and bot.is_dead():
 			continue
@@ -144,7 +144,9 @@ class Scanner:
 			keep[bot.get_instance_id()] = bot
 		for id in _outlined.keys():
 			if not keep.has(id):
-				var old: Object = _outlined[id]
+				# Untyped on purpose: bots freed at round end are still in _outlined, and
+				# assigning a freed instance to a typed variable is a runtime error.
+				var old = _outlined[id]
 				if is_instance_valid(old):
 					_set_outline(old, false)
 				_outlined.erase(id)

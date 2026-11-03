@@ -179,6 +179,16 @@ const FILES := {
 					"coin_value": _NUM_NONNEG,
 				},
 			},
+			"loot": {
+				"type": "object",
+				"fields": {
+					"drop_chance": {"type": "number", "min": 0, "max": 1},
+					"cash_mult": _NUM_NONNEG,
+					"lifetime_s": _NUM_POS,
+					"pickup_radius_m": _NUM_POS,
+					"magnet_speed_m_s": _NUM_NONNEG,
+				},
+			},
 			"hax_points": {
 				"type": "object",
 				"fields": {"kills_divisor": _NUM_POS},

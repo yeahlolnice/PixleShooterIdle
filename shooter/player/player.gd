@@ -28,6 +28,21 @@ extends CharacterBody3D
 ## velocity (the best angle for gain), turning toward the move direction, and
 ## keeps that fraction of the gain. Auto-strafe speed stops at effective
 ## move_speed * max_hop_speed_mult unless uncapped; it never slows the player.
+##
+## God Mode hook (only the god_mode cheat calls this):
+##   set_god_mode(seconds_per_kill, permanent)   # (0, false) = off
+## Every bot kill makes the player invulnerable for seconds_per_kill (it does
+## not stack; the longer of what is left and the new grant wins); permanent
+## ignores all damage. Falling out of the map still kills.
+##
+## Noclip hook (only the noclip cheat calls these):
+##   set_noclip({"burst_s": 5.0, "max_wall_thickness_m": 1.0, "unlimited": false})
+##   clear_noclip()
+## With it, the noclip action (V) toggles flight: no gravity or world collision,
+## fly where you look, hold jump to rise. Each round gives burst_s seconds of
+## flight (refilled at freeze time) unless unlimited. One pass through solid
+## geometry may go at most max_wall_thickness_m deep; deeper is blocked. Flight
+## never ends inside geometry: it lasts until you are out.
 
 signal health_changed(health: float, max_health: float)
 
@@ -53,6 +68,19 @@ var _spawn_index := 0
 var _jump_queued := false
 ## Auto-strafe side, +1 left / -1 right; flips each tick to hold a straight line.
 var _strafe_side := 1.0
+## God Mode: seconds of invulnerability left, and the cheat's settings.
+var invuln_left := 0.0
+var _god_per_kill := 0.0
+var _god_permanent := false
+## Noclip settings, see header. Empty = off.
+var noclip: Dictionary = {}
+var noclipping := false
+## Seconds of flight left this round (ignored when unlimited).
+var noclip_fuel := 0.0
+var _noclip_toggle_queued := false
+var _noclip_in_wall := false
+var _noclip_entry := Vector3.ZERO   ## last free position before entering geometry
+var _saved_collision_mask := 0
 
 @onready var head: Node3D = $Head
 @onready var camera: Camera3D = $Head/Camera3D
@@ -64,6 +92,8 @@ func _ready() -> void:
 	health = effective(&"max_health")
 	health_changed.emit(health, health)
 	EventBus.menu_toggled.connect(_on_menu_toggled)
+	EventBus.bot_killed.connect(_on_bot_killed)
+	EventBus.round_state_changed.connect(_on_round_state_changed)
 	if DisplayServer.get_name() != "headless":
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
@@ -117,12 +147,129 @@ func hop_speed_cap() -> float:
 	return effective(&"move_speed") * float(bhop.get("max_hop_speed_mult", 1.0))
 
 
+# --- God Mode -------------------------------------------------------------------
+
+func set_god_mode(seconds_per_kill: float, permanent: bool) -> void:
+	_god_per_kill = maxf(seconds_per_kill, 0.0)
+	_god_permanent = permanent
+	if _god_per_kill <= 0.0:
+		invuln_left = 0.0
+
+
+func is_invulnerable() -> bool:
+	return _god_permanent or invuln_left > 0.0
+
+
+func _on_bot_killed(_bot: Node, _info: Dictionary) -> void:
+	if _god_per_kill > 0.0 and not is_dead:
+		invuln_left = maxf(invuln_left, _god_per_kill)
+
+
+# --- Noclip ---------------------------------------------------------------------
+
+func set_noclip(settings: Dictionary) -> void:
+	if noclip.is_empty():
+		noclip_fuel = float(settings.get("burst_s", 0.0))
+	noclip = settings.duplicate()
+
+
+func clear_noclip() -> void:
+	noclip = {}
+	_end_noclip()
+
+
+func has_noclip() -> bool:
+	return not noclip.is_empty()
+
+
+func noclip_unlimited() -> bool:
+	return bool(noclip.get("unlimited", false))
+
+
+## Starts or stops flight. Stopping inside geometry is refused. Returns
+## whether the player is flying afterwards.
+func toggle_noclip() -> bool:
+	if noclipping:
+		if not _noclip_in_wall:
+			_end_noclip()
+	elif has_noclip() and not is_dead and (noclip_unlimited() or noclip_fuel > 0.0):
+		noclipping = true
+		_noclip_in_wall = false
+		_saved_collision_mask = collision_mask
+		collision_mask = 0
+		velocity = Vector3.ZERO
+	return noclipping
+
+
+func _end_noclip() -> void:
+	if not noclipping:
+		return
+	noclipping = false
+	_noclip_in_wall = false
+	collision_mask = _saved_collision_mask
+	velocity = Vector3.ZERO
+
+
+## One flight tick along `dir` (world space, length <= 1) at move speed. A step
+## into geometry is allowed while it stays within max_wall_thickness_m (plus the
+## body's own size along `dir`) of where the player went in; deeper is blocked.
+## Burns fuel unless unlimited, and lands once the fuel is gone and the body is clear.
+func step_noclip(delta: float, dir: Vector3) -> void:
+	if not noclip_unlimited():
+		noclip_fuel = maxf(0.0, noclip_fuel - delta)
+	var step := dir.limit_length(1.0) * effective(&"move_speed") * delta
+	var target := global_position + step
+	if step.length_squared() > 0.0:
+		if _overlaps_world(target):
+			if not _noclip_in_wall:
+				_noclip_in_wall = true
+				_noclip_entry = global_position
+			var reach := float(noclip.get("max_wall_thickness_m", 0.0)) + _body_extent(target - _noclip_entry)
+			if target.distance_to(_noclip_entry) <= reach:
+				global_position = target
+		else:
+			_noclip_in_wall = false
+			global_position = target
+	velocity = step / delta if delta > 0.0 else Vector3.ZERO
+	if not noclip_unlimited() and noclip_fuel <= 0.0 and not _noclip_in_wall:
+		_end_noclip()
+
+
+## True if the body's collision shape at `pos` overlaps world geometry.
+func _overlaps_world(pos: Vector3) -> bool:
+	var shape_node := get_node_or_null("CollisionShape3D") as CollisionShape3D
+	if shape_node == null or not is_inside_tree():
+		return false
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = shape_node.shape
+	query.transform = Transform3D(Basis(), pos) * shape_node.transform
+	query.collision_mask = Layers.WORLD
+	return not get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
+
+
+## Length of the body along `dir` (capsule: 2r sideways, full height vertically).
+func _body_extent(dir: Vector3) -> float:
+	var shape_node := get_node_or_null("CollisionShape3D") as CollisionShape3D
+	if shape_node == null or not (shape_node.shape is CapsuleShape3D) or dir.length_squared() < 0.000001:
+		return 0.0
+	var capsule := shape_node.shape as CapsuleShape3D
+	var up := absf(dir.normalized().y)
+	return 2.0 * capsule.radius + (capsule.height - 2.0 * capsule.radius) * up
+
+
+func _on_round_state_changed(state: StringName, _info: Dictionary) -> void:
+	if state == EventBus.ROUND_FREEZE and has_noclip():
+		noclip_fuel = float(noclip.get("burst_s", 0.0))
+
+
 # --- Input ----------------------------------------------------------------------
 
 func _input(event: InputEvent) -> void:
 	# _input, not _unhandled_input: a focused UI button must not swallow Space.
 	if event.is_action_pressed("jump"):
 		_jump_queued = true
+	elif event.is_action_pressed("noclip"):
+		_noclip_toggle_queued = true
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -153,6 +300,20 @@ func add_aim_kick(pitch_deg: float) -> void:
 	head.rotation.x = _pitch
 
 
+## Turns the view toward world `point` by `fraction` (0..1, 1 = snap). Only aim
+## cheats (Aimbot, Spinbot) call this.
+func aim_at(point: Vector3, fraction: float) -> void:
+	var dir := point - camera.global_position
+	if dir.length_squared() < 0.0001 or fraction <= 0.0:
+		return
+	dir = dir.normalized()
+	var limit := deg_to_rad(float(tuning.get("pitch_limit_deg", 89)))
+	var t := minf(fraction, 1.0)
+	rotation.y = lerp_angle(rotation.y, atan2(-dir.x, -dir.z), t)
+	_pitch = lerpf(_pitch, clampf(asin(dir.y), -limit, limit), t)
+	head.rotation.x = _pitch
+
+
 func get_pitch() -> float:
 	return _pitch
 
@@ -161,22 +322,33 @@ func get_pitch() -> float:
 
 func _physics_process(delta: float) -> void:
 	var jump_queued := _jump_queued
+	var noclip_toggle := _noclip_toggle_queued
 	_jump_queued = false
+	_noclip_toggle_queued = false
 	if is_dead:
 		_respawn_timer -= delta
 		if _respawn_timer <= 0.0:
 			respawn()
 		return
-	var wish := Vector3.ZERO
-	var jump_pressed := false
+	invuln_left = maxf(0.0, invuln_left - delta)
+	if noclip_toggle and input_enabled:
+		toggle_noclip()
+	var input := Vector2.ZERO
 	if input_enabled:
-		var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
-		wish = global_transform.basis * Vector3(input.x, 0.0, input.y)
-		# A press counts for this tick only; holding jump re-jumps only with Auto Bhop.
-		jump_pressed = jump_queued or (has_bhop() and Input.is_action_pressed("jump"))
+		input = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	if noclipping:
+		# Fly where the camera looks; hold jump to rise.
+		var fly := camera.global_transform.basis * Vector3(input.x, 0.0, input.y)
+		if input_enabled and Input.is_action_pressed("jump"):
+			fly += Vector3.UP
+		step_noclip(delta, fly)
+		return
+	var wish := global_transform.basis * Vector3(input.x, 0.0, input.y)
+	# A press counts for this tick only; holding jump re-jumps only with Auto Bhop.
+	var jump_pressed := input_enabled and (jump_queued or (has_bhop() and Input.is_action_pressed("jump")))
 	step_movement(delta, wish, jump_pressed)
 	if global_position.y < float(tuning.get("fall_kill_y", -20.0)):
-		take_damage(health, null)
+		_fall_out()
 
 
 ## One movement tick. `wish` is a world-space direction (length <= 1).
@@ -250,7 +422,7 @@ func _autostrafe(horizontal: Vector3, heading: Vector3, steer: Vector3, strength
 # --- Health ---------------------------------------------------------------------
 
 func take_damage(amount: float, source: Node) -> void:
-	if is_dead or amount <= 0.0:
+	if is_dead or amount <= 0.0 or is_invulnerable():
 		return
 	health = maxf(health - amount, 0.0)
 	health_changed.emit(health, effective(&"max_health"))
@@ -259,9 +431,19 @@ func take_damage(amount: float, source: Node) -> void:
 		die(source)
 
 
+## Fell below fall_kill_y: dies even through God Mode, so nobody falls forever.
+func _fall_out() -> void:
+	var amount := health
+	health = 0.0
+	health_changed.emit(health, effective(&"max_health"))
+	EventBus.player_damaged.emit(amount, health, null)
+	die(null)
+
+
 func die(killer: Node = null) -> void:
 	if is_dead:
 		return
+	_end_noclip()
 	is_dead = true
 	velocity = Vector3.ZERO
 	_respawn_timer = float(tuning.get("respawn_delay_s", 3.0))

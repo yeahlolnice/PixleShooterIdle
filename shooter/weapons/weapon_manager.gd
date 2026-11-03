@@ -51,6 +51,14 @@ func is_menu_open() -> bool:
 	return not _open_menus.is_empty()
 
 
+## Fires one shot for a cheat (Triggerbot, Spinbot) under the same rules as the
+## fire button: round live and no menu open. True if a shot went off.
+func cheat_fire() -> bool:
+	if weapon == null or not _open_menus.is_empty() or not _can_shoot:
+		return false
+	return weapon.try_fire()
+
+
 func equip_starter() -> String:
 	return equip(DataRegistry.starter_gun_id())
 

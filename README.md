@@ -21,7 +21,7 @@ On Windows/macOS install Godot 4.7.2 from godotengine.org, open `project.godot`,
 Set `GODOT=/path/to/godot` to use a different binary with the scripts.
 
 ## Controls (rebindable)
-WASD move · Space or mouse wheel jump · LMB fire · R reload · B buy menu (freeze time) · Insert/F1 mod menu ·
+WASD move · Space or mouse wheel jump · V noclip (with the cheat) · LMB fire · R reload · B buy menu (freeze time) · Insert/F1 mod menu ·
 T/Enter chat · Esc pause
 
 ## Layout

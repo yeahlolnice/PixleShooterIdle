@@ -183,6 +183,24 @@ func test_scene_outline_in_range_only_and_removed_on_toggle_off() -> void:
 	assert_null(near.get_node_or_null(Wallhack.HEALTH_BAR_NAME), "bars removed with the cheat")
 
 
+# Round end frees every bot while the scanner still remembers them; the next
+# timer scan used to hit "assign invalid previously freed instance" and crash.
+func test_scan_after_outlined_bots_are_freed() -> void:
+	var world: Node3D = add_child_autofree(Node3D.new())
+	var player := Node3D.new()
+	world.add_child(player)
+	var gone := _spawn_bot(world, Vector3(0, 0, -1))
+	var dying := _spawn_bot(world, Vector3(0, 0, 1))
+	_wh.apply(player, 1)
+	var scanner: Wallhack.Scanner = player.get_node(Wallhack.SCANNER_NAME)
+	assert_eq(scanner.outlined_bots().size(), 2)
+	gone.free()
+	dying.queue_free()
+	scanner.scan()
+	assert_eq(scanner.outlined_bots().size(), 0, "freed and queued-for-deletion bots dropped")
+	_wh.remove(player)
+
+
 func test_scene_health_bar_tracks_damage() -> void:
 	var world: Node3D = add_child_autofree(Node3D.new())
 	var player := Node3D.new()
