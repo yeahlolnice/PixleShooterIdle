@@ -1,0 +1,20 @@
+{
+  "cost_growth": 1.15,
+  "tabs": ["Movement", "Visuals", "Combat"],
+  "cheats": [
+    {"id": "fx_speed", "name": "FX Speed", "tab": "Movement", "order": 2, "unlock": {"kills": 5},
+     "base_cost": 10, "max_level": 3,
+     "effects": [{"key": "fx_mult", "target": "cheat", "type": "number", "from": 1.0, "to": 2.0, "curve": "linear"}]},
+    {"id": "fx_jump", "name": "FX Jump", "tab": "Movement", "order": 1, "unlock": {"kills": 0},
+     "base_cost": 5, "max_level": 2,
+     "effects": [{"key": "fx_jump", "target": "cheat", "type": "bool", "from_level": 1}]},
+    {"id": "fx_glow", "name": "FX Glow", "tab": "Visuals", "order": 3, "unlock": {"prestige": 2},
+     "base_cost": 1000, "max_level": 5,
+     "effects": [{"key": "fx_glow", "target": "cheat", "type": "bool", "from_level": 5}]}
+  ],
+  "upgrades": [
+    {"id": "fx_slots", "name": "FX Slots", "tab": "Combat", "order": 4, "unlock": {"kills": 1},
+     "base_cost": 50, "max_level": 4,
+     "effects": [{"key": "extra_bots", "target": "game", "type": "number", "from": 1, "to": 4, "curve": "linear"}]}
+  ]
+}
