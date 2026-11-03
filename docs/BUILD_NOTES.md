@@ -56,7 +56,9 @@ under 2 minutes.
 - Do 7 bots per wave feel empty or crowded in this arena?
 
 **Known issues**
-- Starter pistol HUD shows "AMMO ∞" (check guns.json starter mag; may be intended, may be a data bug).
+- BUG: HUD shows "AMMO ∞" until the first shot, and after equipping/buying a gun: `EventBus.ammo_changed` is
+  only emitted in `Weapon.try_fire`, not on equip/reload finish (repro: start game, look at bottom-right). Fix: emit
+  `ammo_changed(ammo, mag_size())` from `WeaponManager.equip` and `_finish_reload` (HUD must be ready first).
 - No hit marker, sound for hits, or death screen yet (Phase 3 juice).
 - Not verified: Windows binary runs; mouse input and live bot return fire (headless/xvfb only, no input).
 - Export log under xvfb shows harmless ZINK/ALSA warnings (no GPU/audio in the container).
