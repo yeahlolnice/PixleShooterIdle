@@ -93,6 +93,23 @@ const _ARENA := {
 	},
 }
 
+const _CHAT_TRIGGER := {
+	"type": "object",
+	"fields": {
+		"id": {"type": "string"},
+		"event": {"type": "string"},
+		"channel": {"type": "string"},
+		"once": {"type": "bool"},
+		"once_key": {"type": "string"},
+		"delay_s": _NUM_NONNEG,
+		"chance": {"type": "number", "min": 0, "max": 1},
+		"sender": {"type": "string"},
+		"when": {"type": "map", "values": {"type": "string"}},
+		"lines": {"type": "array", "items": {"type": "string"}, "min_items": 1},
+	},
+	"optional": ["once_key", "chance", "sender", "when"],
+}
+
 const _CHEAT_EFFECT := {
 	"type": "object",
 	"fields": {
@@ -200,6 +217,34 @@ const FILES := {
 		"type": "object",
 		"fields": {
 			"arenas": {"type": "array", "items": _ARENA, "min_items": 1},
+		},
+	},
+	"chat": {
+		"type": "object",
+		"fields": {
+			"channels": {
+				"type": "map",
+				"values": {
+					"type": "object",
+					"fields": {
+						"sender": {"type": "string"},
+						"color": {"type": "string"},
+						"format": {"type": "string"},
+					},
+				},
+			},
+			"ui": {"type": "map", "values": {"type": "string"}},
+			"box": {
+				"type": "object",
+				"fields": {
+					"visible_lines": {"type": "int", "min": 1},
+					"fade_after_s": _NUM_NONNEG,
+					"fade_time_s": _NUM_POS,
+					"log_max_lines": {"type": "int", "min": 1},
+				},
+			},
+			"bot_names": {"type": "array", "items": {"type": "string"}, "min_items": 1},
+			"triggers": {"type": "array", "items": _CHAT_TRIGGER, "min_items": 1},
 		},
 	},
 	"cheats": {

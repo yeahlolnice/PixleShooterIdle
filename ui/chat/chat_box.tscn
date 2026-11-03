@@ -1,0 +1,66 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://ui/chat/chat_box.gd" id="1_chat"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_log"]
+bg_color = Color(0.078, 0.063, 0.129, 0.85)
+content_margin_left = 10.0
+content_margin_top = 8.0
+content_margin_right = 10.0
+content_margin_bottom = 8.0
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="ChatBox" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("1_chat")
+
+[node name="Recent" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -300.0
+offset_right = 544.0
+offset_bottom = -72.0
+grow_vertical = 0
+mouse_filter = 2
+alignment = 2
+
+[node name="LogPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -460.0
+offset_right = 604.0
+offset_bottom = -72.0
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBox_log")
+
+[node name="Box" type="VBoxContainer" parent="LogPanel"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="LogPanel/Box"]
+layout_mode = 2
+text = "CHAT LOG"
+
+[node name="Log" type="RichTextLabel" parent="LogPanel/Box"]
+layout_mode = 2
+size_flags_vertical = 3
+focus_mode = 0
+scroll_following = true
+selection_enabled = false
+
+[node name="MuteBots" type="CheckBox" parent="LogPanel/Box"]
+layout_mode = 2
+focus_mode = 0
+text = "Mute bot chat"

@@ -24,6 +24,32 @@ under 2 minutes.
 - ...
 -->
 
+## Build 2026-11-03 — TASK-013 chat system (Phase 2, not a gate build)
+
+**What changed**
+- New ChatSystem autoload: every instruction (WASD/SPACE/mouse, LEFT CLICK, B to buy in freeze time,
+  INSERT for the mod menu, T/ENTER for the log) arrives as chat lines from `data/chat.json`.
+  Channels: SYSTEM (yellow), seller DM x_Hax_x (magenta), bots (white).
+- Corner chat box fades out; T or ENTER opens a scrollable log with a "Mute bot chat" toggle
+  (stored in `user://settings.cfg`, not in the save).
+- Once-only tutorial lines are remembered in the save and are only marked as seen once they actually show.
+
+**Test it in under 2 minutes**
+1. `tools/run_tests.sh` → ends with `run_tests: ALL PASSED`.
+2. Delete your save, run `godot --path .`: the welcome + B hint appear during freeze time, the shoot hint
+   when the round goes live, and x_Hax_x DMs you about INSERT after your first kill.
+3. Press T, tick "Mute bot chat", die once: no "gg ez" from bots, but the SYSTEM death hint still shows.
+
+**Feedback we need**
+- Does the chat-only tutorial read naturally, and is the corner box readable while fighting?
+- First cheat purchase posts three lines: SYSTEM "X injected" (now), seller "pleasure doing business"
+  (+1.5 s), seller "see? X on" (+4 s, because the first purchase also toggles the cheat on, D29).
+  Is that order and pacing OK, or too chatty?
+
+**Known issues**
+- Not checked in a windowed build by the developer (headless tests only); `mod_spawned` and `prestige`
+  lines exist in chat.json but nothing emits those events until their tickets land.
+
 ## Build 2026-11-03 — Phase 1 Prototype (TASK-002..007) — GATE: "Is shooting fun?"
 
 **What changed**
