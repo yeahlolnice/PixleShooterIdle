@@ -25,7 +25,7 @@ Set `GODOT=/path/to/godot` to use a different binary with the scripts (on Window
 Git Bash; point `GODOT` at the `_console.exe` build so output reaches the terminal).
 
 ## Controls (rebindable)
-WASD move · Space or mouse wheel jump · V noclip (with the cheat) · LMB fire · R reload · B buy menu (freeze time) · Insert/F1 mod menu ·
+WASD move · Space or mouse wheel jump · V noclip (with the cheat) · LMB fire · RMB aim/scope · R reload · B buy menu (freeze time) · Insert/F1 mod menu ·
 T/Enter chat · Esc pause
 
 ## Layout

@@ -55,6 +55,8 @@ var health := 0.0
 var is_dead := false
 ## World positions to respawn at; Main assigns the arena's player spawns.
 var spawn_points: Array[Vector3] = []
+## Mouse-look multiplier; WeaponManager lowers it while scoped (zoom ratio).
+var look_scale := 1.0
 ## False while a menu is open: look and movement input are ignored.
 var input_enabled := true
 
@@ -280,7 +282,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func look(relative: Vector2) -> void:
 	if is_dead or not input_enabled:
 		return
-	var sens: float = tuning.get("mouse_sensitivity", 0.12)
+	var sens: float = float(tuning.get("mouse_sensitivity", 0.12)) * look_scale
 	rotate_y(-deg_to_rad(relative.x * sens))
 	var limit := deg_to_rad(float(tuning.get("pitch_limit_deg", 89)))
 	_pitch = clampf(_pitch - deg_to_rad(relative.y * sens), -limit, limit)

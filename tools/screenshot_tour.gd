@@ -41,6 +41,15 @@ func _run() -> void:
 	buy.open_menu()
 	await _snap("buy_menu")
 	buy.close_menu()
+	var wm: WeaponManager = _main.player.get_node("WeaponManager")
+	for id in ["shotgun_boomstick", "lmg_brrt"]:
+		wm.equip(id)
+		await _snap("gun_" + id)
+	wm.equip("sniper_longboi")
+	Input.action_press("aim")   # held like a player would; the manager reads it each tick
+	await _snap("sniper_scoped")
+	Input.action_release("aim")
+	wm.equip("rifle_block47")
 
 	var mod := _ui(ModMenu) as ModMenu
 	mod.open_menu()

@@ -36,7 +36,18 @@ const _GUN := {
 		"auto": {"type": "bool"},
 		"unlock_kills": {"type": "int", "min": 0},
 		"color": {"type": "string"},
+		# Weapon v2 (TASK-022), all optional; see docs/DATA.md.
+		"category": {"type": "string"},
+		"pellets": {"type": "int", "min": 1},
+		"bloom_deg": _NUM_NONNEG,
+		"bloom_max_deg": _NUM_NONNEG,
+		"bloom_recovery_deg_s": _NUM_NONNEG,
+		"zoom_fov": _NUM_NONNEG,
+		"scoped_spread_mult": _NUM_NONNEG,
+		"model_length_m": _NUM_POS,
 	},
+	"optional": ["category", "pellets", "bloom_deg", "bloom_max_deg", "bloom_recovery_deg_s",
+		"zoom_fov", "scoped_spread_mult", "model_length_m"],
 }
 
 const _BOT := {

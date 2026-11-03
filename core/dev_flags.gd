@@ -42,6 +42,7 @@ static func apply(args: PackedStringArray, allowed: bool) -> bool:
 	if UNLOCK_ALL_FLAG in args:
 		GameState.cash = ALL_CASH
 		GameState.lifetime_kills = ALL_LIFETIME_KILLS
+		GameState.kills = ALL_LIFETIME_KILLS   # guns unlock on run kills
 		GameState.prestige_count = ALL_BANS
 		note = "DEV MODE (--dev-unlock-all): every cheat unlocked, $1B cash. Press INSERT to buy. Not saved."
 	else:
@@ -59,6 +60,7 @@ static func apply(args: PackedStringArray, allowed: bool) -> bool:
 static func unlock_all_in_session() -> void:
 	GameState.disable_persistence()
 	GameState.lifetime_kills = maxi(GameState.lifetime_kills, ALL_LIFETIME_KILLS)
+	GameState.kills = maxi(GameState.kills, ALL_LIFETIME_KILLS)   # guns unlock on run kills
 	GameState.prestige_count = maxi(GameState.prestige_count, ALL_BANS)
 	CheatSystem.refresh_unlocks(false)
 	GameState.add_cash(ALL_CASH)

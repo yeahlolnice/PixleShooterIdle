@@ -55,8 +55,14 @@ sv_airaccelerate, ~12), `air_speed_cap` (m/s; in-air speed cap along the wish di
 | `spread_deg` | degrees | random cone half-angle |
 | `range_m` | metres | hitscan length |
 | `auto` | bool | hold to fire |
-| `unlock_kills` | int ≥ 0 | lifetime kills before it shows in the buy menu |
+| `unlock_kills` | int ≥ 0 | kills this run (resets on ban) before it can be bought; locked guns show "needs N kills" |
 | `color` | palette name | viewmodel colour |
+| `category` | optional string | buy-menu row and viewmodel shape: `pistol` (default), `smg`, `shotgun`, `rifle`, `sniper`, `lmg`, `special` |
+| `pellets` | optional int ≥ 1 | rays per shot (shotgun); `damage` is per pellet; ammo and recoil per shot |
+| `bloom_deg` / `bloom_max_deg` / `bloom_recovery_deg_s` | optional degrees | spread added per shot, its cap, and recovery per second once you stop firing (1.5× the fire interval after the last shot) |
+| `zoom_fov` | optional degrees | camera FOV while holding aim (RMB); 0 / missing = no scope. Mouse look slows by the zoom ratio |
+| `scoped_spread_mult` | optional ≥ 0 | spread multiplier while scoped (sniper: 0 = pinpoint scoped, wide unscoped) |
+| `model_length_m` | optional metres | viewmodel body length (default 0.3) |
 
 ## bots.json
 ```json

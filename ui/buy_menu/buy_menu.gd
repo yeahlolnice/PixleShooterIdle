@@ -2,13 +2,19 @@ class_name BuyMenu
 extends Control
 ## Counter-Strike-style buy menu. Opens with the buy_menu action (B) during
 ## freeze time only and closes when the round goes live. Purchase rules live in
-## ShopService; this only draws the grid and equips through WeaponManager.
+## ShopService; this only draws one row per gun category (guns.json "category",
+## in CATEGORY_ORDER) and equips through WeaponManager. Number keys 1-9 buy in
+## on-screen order. Locked guns show the kills they need.
+
+const CATEGORY_ORDER := ["pistol", "smg", "shotgun", "rifle", "sniper", "lmg", "special"]
+const CATEGORY_NAMES := {"pistol": "PISTOLS", "smg": "SMGS", "shotgun": "SHOTGUNS", "rifle": "RIFLES",
+	"sniper": "SNIPERS", "lmg": "MACHINE GUNS", "special": "SPECIAL"}
 
 ## Set by Main; the menu equips the bought gun here.
 var weapon_manager: WeaponManager
 
 var _freeze := false
-var _grid: GridContainer
+var _rows: VBoxContainer
 var _cash_label: Label
 var _feedback: Label
 var _buttons: Dictionary = {}  # gun_id -> Button
@@ -32,11 +38,9 @@ func _ready() -> void:
 	box.add_child(title)
 	_cash_label = Label.new()
 	box.add_child(_cash_label)
-	_grid = GridContainer.new()
-	_grid.columns = 3
-	_grid.add_theme_constant_override("h_separation", 10)
-	_grid.add_theme_constant_override("v_separation", 10)
-	box.add_child(_grid)
+	_rows = VBoxContainer.new()
+	_rows.add_theme_constant_override("separation", 6)
+	box.add_child(_rows)
 	_feedback = Label.new()
 	box.add_child(_feedback)
 	_build_buttons()
@@ -48,19 +52,51 @@ func _ready() -> void:
 
 func _build_buttons() -> void:
 	var i := 1
-	for g in ShopService.catalog():
-		var b := Button.new()
-		b.custom_minimum_size = Vector2(200, 110)
-		b.text = _label(g, i)
-		b.pressed.connect(_buy.bind(g["id"]))
-		_grid.add_child(b)
-		_buttons[g["id"]] = b
-		i += 1
+	for cat in categories(ShopService.catalog()):
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 10)
+		var header := Label.new()
+		header.text = CATEGORY_NAMES.get(cat, String(cat).to_upper())
+		header.custom_minimum_size = Vector2(130, 0)
+		header.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		row.add_child(header)
+		for g in ShopService.catalog():
+			if String(g.get("category", "pistol")) != cat:
+				continue
+			var b := Button.new()
+			b.custom_minimum_size = Vector2(200, 70)
+			b.add_theme_font_size_override("font_size", 13)
+			b.set_meta("label", _label(g, i))
+			b.text = b.get_meta("label")
+			b.pressed.connect(_buy.bind(g["id"]))
+			row.add_child(b)
+			_buttons[g["id"]] = b
+			i += 1
+		_rows.add_child(row)
+
+
+## Categories present in `guns`, in CATEGORY_ORDER (unknown ones last, in data order).
+static func categories(guns: Array) -> Array:
+	var present: Array = []
+	for g in guns:
+		var c := String(g.get("category", "pistol"))
+		if not present.has(c):
+			present.append(c)
+	var out: Array = []
+	for c in CATEGORY_ORDER:
+		if present.has(c):
+			out.append(c)
+	for c in present:
+		if not out.has(c):
+			out.append(c)
+	return out
 
 
 static func _label(g: Dictionary, index: int) -> String:
-	var dps := float(g["damage"]) * float(g["fire_rate"])
-	return "[%d] %s\n%s\n%d dmg · %.0f dps · %d rnd" % [index, g["name"], Fmt.cash(float(g["price"])), int(g["damage"]), dps, int(g["mag_size"])]
+	var pellets := int(g.get("pellets", 1))
+	var dps := float(g["damage"]) * pellets * float(g["fire_rate"])
+	var dmg := "%d" % int(g["damage"]) if pellets == 1 else "%d×%d" % [int(g["damage"]), pellets]
+	return "[%d] %s\n%s\n%s dmg · %.0f dps · %d rnd" % [index, g["name"], Fmt.cash(float(g["price"])), dmg, dps, int(g["mag_size"])]
 
 
 func is_open() -> bool:
@@ -124,3 +160,5 @@ func _refresh() -> void:
 		var r := ShopService.check(id)
 		b.disabled = r == ShopService.Result.CANNOT_AFFORD or r == ShopService.Result.LOCKED
 		b.tooltip_text = ShopService.message(r)
+		var need := int(DataRegistry.gun(id).get("unlock_kills", 0))
+		b.text = String(b.get_meta("label")) + ("\nneeds %s kills" % Fmt.number(need) if r == ShopService.Result.LOCKED else "")

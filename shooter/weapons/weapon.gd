@@ -7,6 +7,15 @@ extends Node3D
 ## `modifiers` (mag_mult, recoil_mult, spread_mult, infinite_reload,
 ## force_headshot = every bot hit counts as a headshot, set by Aimbot at max).
 ##
+## Weapon v2 (TASK-022), optional guns.json fields:
+##   pellets         rays per shot (shotgun); damage is per pellet, recoil and ammo per shot
+##   bloom_deg / bloom_max_deg / bloom_recovery_deg_s
+##                   spread added per shot up to a max, recovering while not firing
+##   zoom_fov / scoped_spread_mult
+##                   WeaponManager zooms the camera to zoom_fov while aiming (RMB);
+##                   spread is multiplied while scoped (sniper: inaccurate unscoped)
+##   category / model_length_m   viewmodel shape (pistol, smg, shotgun, rifle, sniper, lmg)
+##
 ## Hitbox contract (bots, TASK-003): hitboxes are Area3D on Layers.HITBOXES.
 ## A head hitbox has meta "headshot" = true. The raycast walks up from the hit
 ## Area3D to the first node with `apply_damage(amount: float, info: Dictionary)`.
@@ -21,12 +30,23 @@ signal recoil_kicked(pitch_deg: float)
 enum State { READY, RELOADING }
 
 const MUZZLE_FLASH_S := 0.05
+## Viewmodel kick per shot (metres back) and how fast it returns. Feel, not balance.
+const KICK_M := 0.06
+const KICK_RECOVERY_M_S := 0.6
 
 var gun: Dictionary = {}
 var state: State = State.READY
 var ammo: int = 0
 var modifiers := {"mag_mult": 1.0, "recoil_mult": 1.0, "spread_mult": 1.0, "infinite_reload": false, "force_headshot": false}
+## Extra spread from sustained fire (degrees), see bloom_* fields.
+var bloom := 0.0
+## True while aiming down the scope (set by WeaponManager).
+var scoped := false
 
+var _kick := 0.0
+## Seconds since the last shot; bloom only recovers once you stop firing.
+var _since_shot := INF
+var _rest_position := Vector3.ZERO
 var _cooldown: float = 0.0
 var _reload_left: float = 0.0
 var _flash_left: float = 0.0
@@ -40,6 +60,10 @@ func setup(gun_def: Dictionary) -> void:
 	state = State.READY
 	_cooldown = 0.0
 	_reload_left = 0.0
+	bloom = 0.0
+	scoped = false
+	_kick = 0.0
+	_rest_position = position
 	ammo = mag_size()
 	_rng.randomize()
 	_build_viewmodel()
@@ -65,7 +89,21 @@ func recoil_deg() -> float:
 
 
 func spread_deg() -> float:
-	return float(gun.get("spread_deg", 0.0)) * float(modifiers["spread_mult"])
+	var s := (float(gun.get("spread_deg", 0.0)) + bloom) * float(modifiers["spread_mult"])
+	return s * float(gun.get("scoped_spread_mult", 1.0)) if scoped else s
+
+
+func pellet_count() -> int:
+	return int(gun.get("pellets", 1))
+
+
+## Camera FOV while scoped; 0 = this gun has no scope.
+func zoom_fov() -> float:
+	return float(gun.get("zoom_fov", 0.0))
+
+
+func category() -> String:
+	return String(gun.get("category", "pistol"))
 
 
 func reload_time() -> float:
@@ -119,7 +157,10 @@ func try_fire() -> bool:
 	ammo -= 1
 	_cooldown = fire_interval()
 	# Hitscan first: the shot goes where you aimed, the kick moves the next one.
-	var hit := _hitscan() if is_inside_tree() else {}
+	var hit := _fire_pellets()
+	bloom = minf(bloom + float(gun.get("bloom_deg", 0.0)), float(gun.get("bloom_max_deg", 0.0)))
+	_since_shot = 0.0
+	_kick = KICK_M
 	if recoil_deg() > 0.0:
 		recoil_kicked.emit(recoil_deg())
 	_flash_left = MUZZLE_FLASH_S
@@ -164,10 +205,36 @@ func tick(delta: float) -> void:
 		_flash_left -= delta
 		if _flash_left <= 0.0 and _flash:
 			_flash.visible = false
+	_since_shot += delta
+	if bloom > 0.0 and _since_shot > fire_interval() * 1.5:   # trigger released
+		bloom = maxf(0.0, bloom - float(gun.get("bloom_recovery_deg_s", 0.0)) * delta)
+	if _kick > 0.0:
+		_kick = maxf(0.0, _kick - KICK_RECOVERY_M_S * delta)
+		position = _rest_position + Vector3(0, 0, _kick)
 
 
 func _physics_process(delta: float) -> void:
 	tick(delta)
+
+
+## Casts pellet_count() rays and merges them into one hit summary:
+## {hit, headshot, damage (sum), position (first hit), pellets, pellets_hit}.
+func _fire_pellets() -> Dictionary:
+	var n := pellet_count()
+	var out := {"hit": false, "headshot": false, "damage": 0.0, "position": Vector3.ZERO, "pellets": n, "pellets_hit": 0}
+	if not is_inside_tree():
+		return out
+	for i in n:
+		var h := _hitscan()
+		if not h.get("hit", false):
+			continue
+		if not out["hit"]:
+			out["position"] = h["position"]
+		out["hit"] = true
+		out["pellets_hit"] += 1
+		out["headshot"] = out["headshot"] or h["headshot"]
+		out["damage"] += h["damage"]
+	return out
 
 
 # --- Hitscan --------------------------------------------------------------------------
@@ -228,9 +295,24 @@ func _build_viewmodel() -> void:
 	for child in get_children():
 		child.queue_free()
 	var color := DataRegistry.color(gun.get("color", "")) if DataRegistry.has_method("color") else Color.GRAY
-	_add_box(Vector3(0.08, 0.1, 0.3), Vector3(0, 0, 0), color)               # slide
-	_add_box(Vector3(0.07, 0.16, 0.09), Vector3(0, -0.12, 0.08), color.darkened(0.3))  # grip
-	_flash = _add_box(Vector3(0.1, 0.1, 0.08), Vector3(0, 0, -0.2), Color(1, 0.9, 0.4), true)
+	var dark := color.darkened(0.35)
+	var length := float(gun.get("model_length_m", 0.3))
+	var cat := category()
+	var thick := 0.13 if cat in ["shotgun", "lmg"] else 0.1
+	# Body runs from just behind the grip forward along -Z.
+	_add_box(Vector3(0.08, thick, length), Vector3(0, 0, 0.15 - length * 0.5), color)
+	_add_box(Vector3(0.07, 0.16, 0.09), Vector3(0, -0.12, 0.08), dark)                    # grip
+	if cat in ["smg", "rifle", "sniper", "lmg"]:
+		_add_box(Vector3(0.06, 0.12, 0.18), Vector3(0, -0.02, 0.24), dark)                # stock
+	if cat in ["smg", "rifle"]:
+		_add_box(Vector3(0.05, 0.16, 0.06), Vector3(0, -0.13, -0.08), dark)               # magazine
+	if cat == "lmg":
+		_add_box(Vector3(0.14, 0.14, 0.14), Vector3(0, -0.13, -0.05), dark)               # box mag
+	if cat == "shotgun":
+		_add_box(Vector3(0.09, 0.07, 0.16), Vector3(0, -0.08, 0.15 - length * 0.7), dark) # pump
+	if zoom_fov() > 0.0:
+		_add_box(Vector3(0.05, 0.06, 0.22), Vector3(0, thick * 0.5 + 0.04, 0.0), dark)    # scope
+	_flash = _add_box(Vector3(0.1, 0.1, 0.08), Vector3(0, 0, 0.15 - length - 0.04), Color(1, 0.9, 0.4), true)
 	_flash.visible = false
 	_sound = AudioStreamPlayer.new()
 	_sound.stream = _make_shot_sound()
