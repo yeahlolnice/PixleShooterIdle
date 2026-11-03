@@ -1,0 +1,23 @@
+{
+  "starting_cash": 0,
+  "cost_growth": 1.15,
+  "kill_reward": {
+    "base_cash": 10,
+    "headshot_mult": 1.5,
+    "streak_step": 0.1,
+    "streak_cap": 1.0
+  },
+  "round": {
+    "freeze_time_s": 8,
+    "live_time_s": 120,
+    "summary_time_s": 5
+  },
+  "mod_menu_time_scale": 0.2,
+  "legit_mode": {
+    "coin_chance": 0.5,
+    "coin_value": 1
+  },
+  "hax_points": {
+    "kills_divisor": 1000
+  }
+}

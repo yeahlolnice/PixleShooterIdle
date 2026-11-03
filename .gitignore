@@ -6,3 +6,8 @@ target/
 .env.*
 __pycache__/
 *.log
+
+# Godot
+.godot/
+export_credentials.cfg
+*.translation
