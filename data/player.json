@@ -8,5 +8,13 @@
   "gravity": 16.0,
   "mouse_sensitivity": 0.12,
   "pitch_limit_deg": 89,
-  "respawn_delay_s": 3.0
+  "respawn_delay_s": 3.0,
+  "fall_kill_y": -20.0,
+  "nav": {
+    "agent_radius": 0.5,
+    "agent_height": 2.0,
+    "agent_max_climb": 0.5,
+    "cell_size": 0.25,
+    "cell_height": 0.125
+  }
 }
