@@ -229,10 +229,10 @@ func _physics_process(delta: float) -> void:
 
 
 ## Casts pellet_count() rays and merges them into one hit summary:
-## {hit, headshot, damage (sum), position (first hit), pellets, pellets_hit}.
+## {hit, headshot, damage (sum), position (first hit), pellets, pellets_hit, bots_hit, kills}.
 func _fire_pellets() -> Dictionary:
 	var n := pellet_count()
-	var out := {"hit": false, "headshot": false, "damage": 0.0, "position": Vector3.ZERO, "pellets": n, "pellets_hit": 0}
+	var out := {"hit": false, "headshot": false, "damage": 0.0, "position": Vector3.ZERO, "pellets": n, "pellets_hit": 0, "bots_hit": 0, "kills": 0}
 	if not is_inside_tree():
 		return out
 	for i in n:
@@ -245,6 +245,8 @@ func _fire_pellets() -> Dictionary:
 		out["pellets_hit"] += 1
 		out["headshot"] = out["headshot"] or h["headshot"]
 		out["damage"] += h["damage"]
+		out["bots_hit"] += h["bots_hit"]
+		out["kills"] += h["kills"]
 	return out
 
 
@@ -263,9 +265,18 @@ func spread_direction(forward: Vector3, spread: float) -> Vector3:
 	return (forward * cos(angle) + offset * sin(angle)).normalized()
 
 
-## Casts the shot ray from the camera. Returns {hit, headshot, damage, position}.
+## How many extra bots one ray may pass through (guns.json "pierce", else economy.json
+## collateral.pierce). Walls always stop it.
+func pierce() -> int:
+	return int(gun.get("pierce", DataRegistry.economy().get("collateral", {}).get("pierce", 0)))
+
+
+## Casts the shot ray from the camera. It passes through up to pierce() bots
+## (collateral), each later bot taking collateral.damage_falloff less, and stops at
+## the world. Returns {hit, headshot, damage (sum), position (first hit), bots_hit, kills}.
+## Two or more kills from one ray emit EventBus.collateral_kill.
 func _hitscan() -> Dictionary:
-	var result := {"hit": false, "headshot": false, "damage": 0.0, "position": Vector3.ZERO}
+	var result := {"hit": false, "headshot": false, "damage": 0.0, "position": Vector3.ZERO, "bots_hit": 0, "kills": 0}
 	var cam := get_viewport().get_camera_3d()
 	if cam == null:
 		return result
@@ -276,29 +287,47 @@ func _hitscan() -> Dictionary:
 	query.collide_with_areas = true
 	query.collide_with_bodies = true
 	var space := get_world_3d().direct_space_state
-	var ray := space.intersect_ray(query)
-	if ray.is_empty():
-		return result
-	result["hit"] = true
-	result["position"] = ray["position"]
-	var collider: Object = ray["collider"]
-	if collider is Area3D:
-		var headshot: bool = bool(collider.get_meta("headshot", false)) or collider.get_meta("hit_kind", "") == "head" \
-				or bool(modifiers.get("force_headshot", false))
-		var dealt := damage() * (float(gun["headshot_mult"]) if headshot else 1.0)
-		result["headshot"] = headshot
-		result["damage"] = dealt
+	var falloff := float(DataRegistry.economy().get("collateral", {}).get("damage_falloff", 1.0))
+	var dmg_scale := 1.0
+	var exclude: Array[RID] = []
+	var kill_pos := Vector3.ZERO
+	for i in pierce() + 1:
+		query.exclude = exclude
+		var ray := space.intersect_ray(query)
+		if ray.is_empty():
+			break
+		if not result["hit"]:
+			result["position"] = ray["position"]
+		result["hit"] = true
+		var collider: Object = ray["collider"]
+		if not (collider is Area3D):
+			break   # world geometry stops the bullet
+		var headshot: bool = bool(collider.get_meta("headshot", false)) or collider.get_meta("hit_kind", "") == "head" or bool(modifiers.get("force_headshot", false))
+		var base := damage() * dmg_scale
+		var dealt := base * (float(gun["headshot_mult"]) if headshot else 1.0)
+		result["headshot"] = result["headshot"] or headshot
+		result["damage"] += dealt
 		var bot: Object = collider.get_meta("bot") if collider.has_meta("bot") else null
 		if bot and bot.has_method("take_hit"):  # Bot hitboxes: Bot applies the headshot multiplier itself
-			bot.take_hit("head" if headshot else "body", damage(), gun_id(), float(gun["headshot_mult"]))
-			return result
+			var was_alive: bool = not bot.is_dead()
+			bot.take_hit("head" if headshot else "body", base, gun_id(), float(gun["headshot_mult"]))
+			result["bots_hit"] += 1
+			if was_alive and bot.is_dead():
+				result["kills"] += 1
+				kill_pos = (bot as Node3D).global_position
+			for area in (bot as Node).find_children("*", "Area3D", true, false):
+				exclude.append((area as Area3D).get_rid())
+			dmg_scale *= falloff
+			continue
 		var target: Node = collider
 		while target and not target.has_method("apply_damage"):
 			target = target.get_parent()
 		if target:
 			target.apply_damage(dealt, {"headshot": headshot, "gun_id": gun_id(), "position": ray["position"]})
+		break
+	if result["kills"] >= 2:
+		EventBus.collateral_kill.emit(int(result["kills"]), kill_pos)
 	return result
-
 
 # --- Procedural viewmodel, flash and sound --------------------------------------------
 

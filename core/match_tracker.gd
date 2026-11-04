@@ -18,11 +18,16 @@ var cash_earned := 0.0
 var deaths := 0
 var time_s := 0.0
 var _running := false
+## Multi-kill chain (fun pack): kills within multi_kill.window_s of the previous one.
+var chain := 0
+var _clock := 0.0
+var _last_kill_at := -INF
 
 
 func _ready() -> void:
 	EventBus.bot_killed.connect(_on_bot_killed)
 	EventBus.player_died.connect(_on_player_died)
+	EventBus.collateral_kill.connect(_on_collateral_kill)
 
 
 func start_round(number: int) -> void:
@@ -37,6 +42,7 @@ func start_round(number: int) -> void:
 
 
 func tick(delta: float) -> void:
+	_clock += delta
 	if _running:
 		time_s += delta
 
@@ -81,9 +87,10 @@ static func cheat_bonus_mult() -> float:
 	return 1.0 + per * on
 
 
-## Credits cash and kill counters, then extends the streak. Returns cash paid.
-func record_kill(headshot: bool, bot_type := "") -> float:
-	var cash := kill_value(headshot, bot_type)
+## Credits cash and kill counters, then extends the streak. `mult` scales the
+## cash (multi-kill bonus). Returns cash paid.
+func record_kill(headshot: bool, bot_type := "", mult := 1.0) -> float:
+	var cash := kill_value(headshot, bot_type) * mult
 	GameState.add_cash(cash)
 	GameState.add_kill()
 	streak += 1
@@ -106,8 +113,30 @@ func record_death() -> void:
 
 
 func _on_bot_killed(_bot: Node, info: Dictionary) -> void:
-	var cash := record_kill(bool(info.get("headshot", false)), String(info.get("bot_type", "")))
+	var mult := advance_chain()
+	var cash := record_kill(bool(info.get("headshot", false)), String(info.get("bot_type", "")), mult)
 	EventBus.kill_rewarded.emit(cash, info)
+	if chain >= 2:
+		EventBus.multi_kill.emit(chain, mult)
+
+
+## Counts this kill into the multi-kill chain and returns its cash multiplier:
+## 1 + (chain - 1) x step, capped (economy.json multi_kill).
+func advance_chain() -> float:
+	var rules: Dictionary = DataRegistry.economy().get("multi_kill", {})
+	chain = chain + 1 if _clock - _last_kill_at <= float(rules.get("window_s", 0.0)) else 1
+	_last_kill_at = _clock
+	return minf(1.0 + (chain - 1) * float(rules.get("step", 0.0)), float(rules.get("cap", 1.0)))
+
+
+## One bullet killed `count` bots: pays collateral.bonus_cash_mult x a plain kill per bot.
+func _on_collateral_kill(count: int, position: Vector3) -> void:
+	var bonus := kill_value(false) * float(DataRegistry.economy().get("collateral", {}).get("bonus_cash_mult", 0.0)) * count
+	if bonus <= 0.0:
+		return
+	GameState.add_cash(bonus)
+	cash_earned += bonus
+	EventBus.bonus_paid.emit("COLLATERAL x%d" % count, bonus, position)
 
 
 func _on_player_died(_info: Dictionary) -> void:

@@ -54,6 +54,12 @@ signal kill_rewarded(cash: float, info: Dictionary)
 signal cheat_fired(cheat_id: String)
 ## A loot pickup paid out (LootPickup.collect). Audio, juice.
 signal loot_collected(value: float)
+## Kills chained inside multi_kill.window_s (MatchTracker): chain 2 = double kill.
+signal multi_kill(chain: int, mult: float)
+## One bullet killed `count` bots (Weapon, collateral).
+signal collateral_kill(count: int, position: Vector3)
+## Extra cash paid on top of a kill (MatchTracker): reason e.g. "COLLATERAL x3".
+signal bonus_paid(reason: String, cash: float, position: Vector3)
 ## Scope view on/off (WeaponManager); HUD draws the scope overlay.
 signal scope_changed(scoped: bool)
 ## GameState kill counters changed.

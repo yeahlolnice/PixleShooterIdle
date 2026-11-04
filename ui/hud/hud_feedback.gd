@@ -13,6 +13,9 @@ const FEED_LINES := 5
 const FEED_LIFE_S := 4.0
 const FEED_FADE_S := 0.8
 const SCOPE_RADIUS_RATIO := 0.42   ## of the shorter screen side
+const ANNOUNCE_S := 1.4
+const CHAIN_NAMES := {2: "DOUBLE KILL", 3: "TRIPLE KILL", 4: "MULTI KILL"}
+const CHAIN_TOP := "RAMPAGE"
 
 var _marker: Label
 var _marker_left := 0.0
@@ -22,6 +25,8 @@ var _death_label: Label
 var _respawn_left := 0.0
 var _killer_name := ""
 var _scope: Control
+var _announce: Label
+var _announce_left := 0.0
 
 
 func _ready() -> void:
@@ -63,14 +68,34 @@ func _ready() -> void:
 	_death_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_death_label.add_theme_font_size_override("font_size", 22)
 	_death.add_child(_death_label)
+	_announce = Label.new()
+	_announce.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	_announce.offset_top = 150.0
+	_announce.offset_bottom = 200.0
+	_announce.offset_left = -300.0
+	_announce.offset_right = 300.0
+	_announce.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_announce.add_theme_font_size_override("font_size", 34)
+	_announce.add_theme_constant_override("outline_size", 8)
+	_announce.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	_announce.add_theme_color_override("font_color", DataRegistry.color("accent"))
+	_announce.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_announce.visible = false
+	add_child(_announce)
 	EventBus.bot_damaged.connect(func(_bot, info): show_hit(bool(info.get("headshot", false)), false))
 	EventBus.kill_rewarded.connect(_on_kill_rewarded)
 	EventBus.player_died.connect(_on_player_died)
 	EventBus.player_spawned.connect(func(_p): _death.visible = false)
 	EventBus.scope_changed.connect(func(on): _scope.visible = on)
+	EventBus.multi_kill.connect(func(c, m): announce(chain_text(c, m)))
+	EventBus.bonus_paid.connect(func(reason, cash, _pos): announce("%s  +%s" % [reason, Fmt.cash(cash)]))
 
 
 func _process(delta: float) -> void:
+	if _announce_left > 0.0:
+		_announce_left -= delta
+		_announce.modulate.a = clampf(_announce_left / 0.4, 0.0, 1.0)
+		_announce.visible = _announce_left > 0.0
 	if _marker_left > 0.0:
 		_marker_left -= delta
 		_marker.modulate.a = clampf(_marker_left / HIT_MARKER_S, 0.0, 1.0)
@@ -113,6 +138,24 @@ func death_screen_text() -> String:
 
 func is_scope_visible() -> bool:
 	return _scope.visible
+
+
+## Big centre line for multi-kills and bonuses, fading out.
+func announce(text: String) -> void:
+	_announce.text = text
+	_announce_left = ANNOUNCE_S
+	_announce.modulate.a = 1.0
+	_announce.visible = true
+
+
+func announcement() -> String:
+	return _announce.text if _announce.visible else ""
+
+
+## "DOUBLE KILL  x1.5", ..., "RAMPAGE x5  x3.0"
+static func chain_text(chain: int, mult: float) -> String:
+	var title: String = CHAIN_NAMES.get(chain, "%s x%d" % [CHAIN_TOP, chain])
+	return "%s  x%s" % [title, String.num(mult, 1)]
 
 
 ## "+$240  Sniper  HEADSHOT  [Block-47]"

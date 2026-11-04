@@ -45,9 +45,10 @@ const _GUN := {
 		"zoom_fov": _NUM_NONNEG,
 		"scoped_spread_mult": _NUM_NONNEG,
 		"model_length_m": _NUM_POS,
+		"pierce": {"type": "int", "min": 0},
 	},
 	"optional": ["category", "pellets", "bloom_deg", "bloom_max_deg", "bloom_recovery_deg_s",
-		"zoom_fov", "scoped_spread_mult", "model_length_m"],
+		"zoom_fov", "scoped_spread_mult", "model_length_m", "pierce"],
 }
 
 ## Per-gun upgrade track (guns.json "upgrades", TASK-024).
@@ -219,6 +220,14 @@ const FILES := {
 					"coin_chance": {"type": "number", "min": 0, "max": 1},
 					"coin_value": _NUM_NONNEG,
 				},
+			},
+			"collateral": {
+				"type": "object",
+				"fields": {"pierce": {"type": "int", "min": 0}, "damage_falloff": _NUM_NONNEG, "bonus_cash_mult": _NUM_NONNEG},
+			},
+			"multi_kill": {
+				"type": "object",
+				"fields": {"window_s": _NUM_POS, "step": _NUM_NONNEG, "cap": _NUM_POS},
 			},
 			"loot": {
 				"type": "object",

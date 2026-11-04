@@ -19,6 +19,8 @@
     "coin_chance": 0.5,
     "coin_value": 1
   },
+  "collateral": {"pierce": 2, "damage_falloff": 0.75, "bonus_cash_mult": 0.5},
+  "multi_kill": {"window_s": 2.0, "step": 0.5, "cap": 3.0},
   "loot": {
     "drop_chance": 0.5,
     "cash_mult": 0.5,

@@ -45,6 +45,8 @@ func _ready() -> void:
 	EventBus.gun_upgraded.connect(func(_id, _s, _l): play("buy"))
 	EventBus.menu_toggled.connect(func(_id, open): play("menu_open" if open else "menu_close", -6.0))
 	EventBus.scope_changed.connect(func(_on): play("scope", -4.0))
+	EventBus.multi_kill.connect(func(_c, _m): play("unlock", -2.0))
+	EventBus.bonus_paid.connect(func(_r, _c, _p): play("loot"))
 
 
 ## Plays `sound_name` on the next free pooled player. Returns the player.

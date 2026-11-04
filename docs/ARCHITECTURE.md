@@ -87,6 +87,9 @@ Signals only (plus `emit_chat_event`). Emitter column = the only code that shoul
 | `scope_changed` | `scoped: bool` | WeaponManager.set_aiming | HUD scope overlay, audio |
 | `loot_collected` | `value: float` | LootPickup.collect | audio |
 | `cheat_fired` | `cheat_id: String` | Triggerbot, Spinbot (after a shot) | HUD CheatFx (crosshair flash, whip streak) |
+| `multi_kill` | `chain: int, mult: float` | MatchTracker (chain >= 2) | HUD announcer, audio |
+| `collateral_kill` | `count: int, position: Vector3` | Weapon (one ray killed 2+) | MatchTracker (bonus) |
+| `bonus_paid` | `reason: String, cash: float, position: Vector3` | MatchTracker | HUD announcer, HitFx pop-up, audio |
 | `round_state_changed` | `state: StringName, info: {round: int, duration: float}` | RoundController | spawner, buy menu, HUD, ChatSystem |
 | `cash_changed` | `total: float, delta: float` | GameState only | HUD, mod/buy menus, ChatSystem (first_cash) |
 | `kills_changed` | `kills: int, lifetime_kills: int` | GameState only | CheatSystem (unlocks), HUD |

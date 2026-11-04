@@ -12,11 +12,13 @@ const DAMAGE_PIXEL := 0.0016
 const CASH_PIXEL := 0.0022
 const HEAD_HEIGHT := Vector3(0, 1.9, 0)
 const CASH_HEIGHT := Vector3(0, 2.3, 0)
+const BONUS_HEIGHT := Vector3(0, 2.8, 0)
 
 
 func _ready() -> void:
 	EventBus.bot_damaged.connect(_on_bot_damaged)
 	EventBus.kill_rewarded.connect(_on_kill_rewarded)
+	EventBus.bonus_paid.connect(func(reason, cash, pos): spawn_label("%s +%s" % [reason, Fmt.cash(cash)], pos + BONUS_HEIGHT, DataRegistry.color("accent"), CASH_PIXEL, CASH_LIFE_S))
 
 
 func _on_bot_damaged(_bot: Node, info: Dictionary) -> void:

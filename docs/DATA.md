@@ -23,9 +23,12 @@ section here. Files without a schema still load (raw, via `DataRegistry.get_file
 | `kill_reward.headshot_mult` | number > 0 | headshot cash factor |
 | `kill_reward.streak_step` | number ≥ 0 | bonus fraction per kill in the current streak |
 | `kill_reward.streak_cap` | number ≥ 0 | max total streak bonus fraction (1.0 = up to ×2) |
+| `round.respawn_delay_s` | optional seconds | a killed bot is replaced after this (trickle, D62) |
 | `round.freeze_time_s` / `live_time_s` / `summary_time_s` | seconds | round phase lengths |
 | `mod_menu_time_scale` | 0 < x ≤ 1 | `Engine.time_scale` while the mod menu is open |
 | `legit_mode.coin_chance` / `coin_value` | 0–1 / cash | all-cheats-off bonus per kill (Phase 4) |
+| `collateral.pierce` / `damage_falloff` / `bonus_cash_mult` | int / 0–1 / ≥ 0 | extra bots one bullet passes through (guns may override with `pierce`), damage kept per bot passed, and bonus cash per bot when one bullet kills 2+ ("COLLATERAL xN") |
+| `multi_kill.window_s` / `step` / `cap` | s / ≥ 0 / ≥ 1 | kills within `window_s` of the last chain; kill cash × (1 + (chain − 1) × step), capped. Player kills only |
 | `loot.drop_chance` | 0–1 | chance a kill drops a bonus-cash pickup (`shooter/loot/`) |
 | `loot.cash_mult` | number ≥ 0 | pickup value = this × that kill's cash (paid on top of the kill reward) |
 | `loot.lifetime_s` / `pickup_radius_m` | s / m | pickup vanishes after / is collected within this distance of the player |
@@ -64,6 +67,7 @@ offset added per hit taken / shot fired), `max`, `decay_per_s`; the player's `sh
 | `zoom_fov` | optional degrees | camera FOV while holding aim (RMB); 0 / missing = no scope. Mouse look slows by the zoom ratio |
 | `scoped_spread_mult` | optional ≥ 0 | spread multiplier while scoped (sniper: 0 = pinpoint scoped, wide unscoped) |
 | `model_length_m` | optional metres | viewmodel body length (default 0.3) |
+| `pierce` | optional int ≥ 0 | overrides economy.json `collateral.pierce` (sniper 4, shotgun pellets 0) |
 
 Top-level `upgrades` (optional, TASK-024): `stat -> {name, step, max_level, min_base_cost, cost_mult, cost_growth}` for `damage` and `fire_rate`. Level n multiplies the stat by `1 + step × n`; the next level costs `max(gun price, min_base_cost) × cost_mult × cost_growth^n`. Upgrades are bought for the gun in hand from the buy menu, saved in `GameState.gun_upgrades`, kept through death, reset on ban.
 
@@ -90,6 +94,7 @@ the arena move_speed mult) and `strafe_switch_s` (rusher flips direction about t
 | `id`, `name` | string | |
 | `order` | int ≥ 1 | progression order (`DataRegistry.arenas()` is sorted by it) |
 | `cash_mult` | number > 0 | `global_mult` factor for kills here (plan: ×10 per arena) |
+| `entrances` / `column_gap_s` | optional vec3[] / seconds | non-sniper bots enter here in single file, one per entrance every `column_gap_s` (default 0.6), then march on the player (D62) |
 | `unlock_kills` | optional int ≥ 0 | lifetime kills to unlock (default 0); unlocked arenas stay unlocked through bans. Picked in the buy menu's SERVER row during freeze time (ArenaService, `GameState.current_arena_id`) |
 | `bots_per_wave` | int ≥ 1 | base wave size (+ `GameState.server_slots`) |
 | `bot_types` | array of bot ids | which bots spawn here |
