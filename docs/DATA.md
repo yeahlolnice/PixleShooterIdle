@@ -29,6 +29,7 @@ section here. Files without a schema still load (raw, via `DataRegistry.get_file
 | `legit_mode.coin_chance` / `coin_value` | 0–1 / cash | all-cheats-off bonus per kill (Phase 4) |
 | `collateral.pierce` / `damage_falloff` / `bonus_cash_mult` | int / 0–1 / ≥ 0 | extra bots one bullet passes through (guns may override with `pierce`), damage kept per bot passed, and bonus cash per bot when one bullet kills 2+ ("COLLATERAL xN") |
 | `multi_kill.window_s` / `step` / `cap` | s / ≥ 0 / ≥ 1 | kills within `window_s` of the last chain; kill cash × (1 + (chain − 1) × step), capped. Player kills only |
+| `free_trial.round` / `seconds` / `cheats` | int / s / {cheat_id: level} | once per save, when that round goes live, these cheats run at these levels for `seconds` without being owned (D64) |
 | `loot.drop_chance` | 0–1 | chance a kill drops a bonus-cash pickup (`shooter/loot/`) |
 | `loot.cash_mult` | number ≥ 0 | pickup value = this × that kill's cash (paid on top of the kill reward) |
 | `loot.lifetime_s` / `pickup_radius_m` | s / m | pickup vanishes after / is collected within this distance of the player |

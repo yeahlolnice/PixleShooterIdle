@@ -20,6 +20,7 @@
     "coin_value": 1
   },
   "collateral": {"pierce": 2, "damage_falloff": 0.75, "bonus_cash_mult": 0.5},
+  "free_trial": {"round": 1, "seconds": 30, "cheats": {"aimbot": 10, "wallhack": 6}},
   "multi_kill": {"window_s": 2.0, "step": 0.5, "cap": 3.0},
   "loot": {
     "drop_chance": 0.5,

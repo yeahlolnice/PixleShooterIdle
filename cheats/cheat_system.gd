@@ -22,12 +22,16 @@ extends Node
 
 ## The upgrade whose level is stored in GameState.server_slots.
 const SERVER_SLOTS_ID := "server_slots"
+## GameState.chat_flags key: the free trial already ran for this save.
+const FREE_TRIAL_FLAG := "free_trial_used"
 
 var _cheats: Array[CheatBase] = []
 var _upgrades: Array[CheatBase] = []
 var _by_id: Dictionary = {}
 var _unlocked: Dictionary = {}
 var _player: Object = null
+## Free trials (fun pack, D64): cheat_id -> {"level": int, "left": seconds}. Not saved.
+var _trials: Dictionary = {}
 
 
 func _ready() -> void:
@@ -36,6 +40,7 @@ func _ready() -> void:
 	EventBus.gun_equipped.connect(func(_gun_id): reapply())
 	EventBus.kills_changed.connect(func(_kills, _lifetime): refresh_unlocks())
 	EventBus.game_state_loaded.connect(_on_game_state_loaded)
+	EventBus.round_state_changed.connect(_on_round_state)
 
 
 ## (Re)builds every cheat from DataRegistry. Unlock state is recomputed silently.
@@ -86,8 +91,11 @@ func is_owned(id: String) -> bool:
 	return level(id) > 0
 
 
-## Upgrades are always "on" once owned; cheats follow their switch.
+## Upgrades are always "on" once owned; cheats follow their switch. A running
+## free trial counts as on.
 func is_enabled(id: String) -> bool:
+	if trial_left(id) > 0.0:
+		return true
 	if not is_owned(id):
 		return false
 	if is_upgrade(id):
@@ -128,7 +136,7 @@ func effect(id: String, key: String) -> Variant:
 	var cheat := get_cheat(id)
 	if cheat == null:
 		return null
-	return cheat.value_at(key, level(id) if is_enabled(id) else 0)
+	return cheat.value_at(key, effective_level(id) if is_enabled(id) else 0)
 
 
 ## Extra bots per wave from the Server Slots upgrade.
@@ -225,10 +233,72 @@ func _on_game_state_loaded() -> void:
 func _apply(cheat: CheatBase) -> void:
 	var player := get_player()
 	if player and cheat:
-		cheat.apply(player, level(cheat.id))
+		cheat.apply(player, effective_level(cheat.id))
 
 
 func _remove(cheat: CheatBase) -> void:
 	var player := get_player()
 	if player and cheat:
 		cheat.remove(player)
+
+
+# --- Free trial (fun pack, D64) ---------------------------------------------------
+
+## The level a cheat runs at: the owned level, or a higher free-trial level while
+## a trial runs. level() stays the owned level (purchases, saves).
+func effective_level(id: String) -> int:
+	var owned := level(id)
+	if trial_left(id) > 0.0:
+		return maxi(owned, int(_trials[id]["level"]))
+	return owned
+
+
+## Seconds left on `id`'s free trial (0 = none).
+func trial_left(id: String) -> float:
+	return float(_trials[id]["left"]) if _trials.has(id) else 0.0
+
+
+## Runs `levels` (cheat_id -> level) for `seconds` without owning them. Emits
+## cheat_toggled(id, true) now and (id, false) when it ends, unless owned and on.
+func start_trial(levels: Dictionary, seconds: float) -> void:
+	for id in levels:
+		if get_cheat(id) == null or is_upgrade(id):
+			continue
+		_trials[id] = {"level": int(levels[id]), "left": seconds}
+		_apply(get_cheat(id))
+		EventBus.cheat_toggled.emit(id, true)
+
+
+func _process(delta: float) -> void:
+	tick_trials(delta)
+
+
+## Counts trials down; expired ones fall back to the owned state. Split out for tests.
+func tick_trials(delta: float) -> void:
+	if _trials.is_empty():
+		return
+	for id in _trials.keys():
+		_trials[id]["left"] = float(_trials[id]["left"]) - delta
+		if float(_trials[id]["left"]) > 0.0:
+			continue
+		_trials.erase(id)
+		var cheat := get_cheat(id)
+		if is_enabled(id):
+			_apply(cheat)   # owned: back to its own level
+		else:
+			_remove(cheat)
+		EventBus.cheat_toggled.emit(id, is_enabled(id))
+		if _trials.is_empty():
+			EventBus.emit_chat_event(&"free_trial_end", {})
+
+
+## Starts economy.json free_trial once per save, when its round goes live.
+func _on_round_state(state: StringName, info: Dictionary) -> void:
+	var rules: Dictionary = DataRegistry.economy().get("free_trial", {})
+	if rules.is_empty() or state != EventBus.ROUND_LIVE or int(info.get("round", 0)) != int(rules.get("round", 1)):
+		return
+	if GameState.chat_flags.get(FREE_TRIAL_FLAG, false):
+		return
+	GameState.chat_flags[FREE_TRIAL_FLAG] = true
+	start_trial(rules.get("cheats", {}), float(rules.get("seconds", 0.0)))
+	EventBus.emit_chat_event(&"free_trial", {"seconds": rules.get("seconds", 0)})

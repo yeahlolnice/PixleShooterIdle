@@ -225,6 +225,10 @@ const FILES := {
 				"type": "object",
 				"fields": {"pierce": {"type": "int", "min": 0}, "damage_falloff": _NUM_NONNEG, "bonus_cash_mult": _NUM_NONNEG},
 			},
+			"free_trial": {
+				"type": "object",
+				"fields": {"round": {"type": "int", "min": 1}, "seconds": _NUM_POS, "cheats": {"type": "map", "values": {"type": "int", "min": 1}}},
+			},
 			"multi_kill": {
 				"type": "object",
 				"fields": {"window_s": _NUM_POS, "step": _NUM_NONNEG, "cap": _NUM_POS},

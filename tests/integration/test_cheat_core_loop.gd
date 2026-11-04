@@ -20,6 +20,7 @@ func before_each() -> void:
 	_clear_dir()
 	_saves = SaveService.new(StubBackend.new(TEST_DIR))
 	GameState.new_game()
+	GameState.chat_flags[CheatSystem.FREE_TRIAL_FLAG] = true   # no round-1 trial cheats in this test
 	ChatSystem.configure(DataRegistry.chat())  # drop fixtures/queued lines from other tests
 	ChatSystem.muted_channels = {}
 	ChatSystem.history.clear()

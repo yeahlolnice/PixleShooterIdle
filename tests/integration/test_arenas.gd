@@ -10,6 +10,7 @@ var _saved: Dictionary
 func before_each() -> void:
 	_saved = GameState.to_dict()
 	GameState.new_game()
+	GameState.chat_flags[CheatSystem.FREE_TRIAL_FLAG] = true   # no round-1 trial cheats in this test
 
 
 func after_each() -> void:

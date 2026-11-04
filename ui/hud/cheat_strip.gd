@@ -4,6 +4,7 @@ extends VBoxContainer
 ## "SPEED HACK  L3". God Mode shows its invulnerability time left (∞ when
 ## permanent); Noclip shows flight fuel and FLYING while airborne. Reads
 ## CheatSystem queries and the player from EventBus.player_spawned; changes nothing.
+## Free-trial cheats (D64) show "TRIAL 12s" and are highlighted.
 
 const COLOR_ON := "neon"
 const COLOR_HOT := "cash"   ## a timed effect is running right now
@@ -24,8 +25,8 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	for id in ["god_mode", "noclip"]:
-		if _labels.has(id):
+	for id in _labels:
+		if id == "god_mode" or id == "noclip" or CheatSystem.trial_left(id) > 0.0:
 			_refresh(id)
 
 
@@ -63,8 +64,11 @@ func _refresh(id: String) -> void:
 		# First boot: player_spawned fired before the HUD existed.
 		player = get_tree().get_first_node_in_group("player")
 	var p: Object = player if is_instance_valid(player) else null
-	label.text = chip_text(cheat.display_name, id, CheatSystem.level(id), p)
-	var hot: bool = p != null and ((id == "god_mode" and p.is_invulnerable()) or (id == "noclip" and p.noclipping))
+	label.text = chip_text(cheat.display_name, id, CheatSystem.effective_level(id), p)
+	var trial := CheatSystem.trial_left(id)
+	if trial > 0.0:
+		label.text += "  TRIAL %ds" % ceili(trial)
+	var hot: bool = p != null and ((id == "god_mode" and p.is_invulnerable()) or (id == "noclip" and p.noclipping)) or trial > 0.0
 	label.add_theme_color_override("font_color", DataRegistry.color(COLOR_HOT if hot else COLOR_ON))
 
 

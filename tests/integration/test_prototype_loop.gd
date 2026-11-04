@@ -6,6 +6,7 @@ var main: Node3D
 
 func before_each() -> void:
 	GameState.new_game()
+	GameState.chat_flags[CheatSystem.FREE_TRIAL_FLAG] = true   # no round-1 trial cheats in this test
 	main = add_child_autofree(_make_main())
 	await wait_physics_frames(3)
 
