@@ -36,16 +36,24 @@ func test_cycle_uses_data_durations() -> void:
 	assert_signal_emit_count(EventBus, "round_state_changed", 4)
 
 
-func test_wave_spawns_on_live_and_respawns_when_cleared() -> void:
+func test_wave_on_live_then_each_kill_is_replaced_after_the_delay() -> void:
 	watch_signals(rc)
 	rc.start()
 	rc.advance(float(_round["freeze_time_s"]) + 0.1)
 	assert_signal_emit_count(rc, "spawn_wave_requested", 1)
 	var n := rc.bots_alive
 	assert_gt(n, 0)
-	for i in range(n):
-		EventBus.bot_killed.emit(null, {})
-	assert_signal_emit_count(rc, "spawn_wave_requested", 2)
+	EventBus.bot_killed.emit(null, {})
+	EventBus.bot_killed.emit(null, {})
+	assert_eq(rc.bots_alive, n - 2)
+	var delay := float(_round.get("respawn_delay_s", 0.0))
+	rc.advance(delay * 0.5)
+	assert_signal_emit_count(rc, "spawn_bots_requested", 0, "not before the delay")
+	rc.advance(delay)
+	assert_signal_emit_count(rc, "spawn_bots_requested", 1)
+	assert_eq(get_signal_parameters(rc, "spawn_bots_requested")[0], 2, "both replaced")
+	assert_eq(rc.bots_alive, n, "back to full strength")
+	assert_signal_emit_count(rc, "spawn_wave_requested", 1, "no wave-clear restart")
 
 
 func test_server_slots_bought_after_start_grow_next_wave() -> void:

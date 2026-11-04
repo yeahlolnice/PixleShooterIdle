@@ -95,3 +95,18 @@ func test_grunt_still_stops_to_shoot() -> void:
 	_run(grunt, 0.5)
 	assert_almost_eq(grunt.global_position.x, p0.x, 0.01)
 	assert_almost_eq(grunt.global_position.z, p0.z, 0.01)
+
+
+func test_entrance_bots_march_on_the_player_out_of_sight() -> void:
+	var far := float(DataRegistry.bot("grunt")["sight_range_m"]) * 2.0
+	await wait_physics_frames(2)
+	var grunt := _bot("grunt", Vector3(0, 0, -far))
+	grunt.marching = true
+	var before := _flat_distance(grunt)
+	_run(grunt, 1.0)
+	assert_eq(grunt.state, Bot.State.WANDER, "cannot see yet")
+	assert_lt(_flat_distance(grunt), before - 1.0, "but closes in")
+	var idle := _bot("grunt", Vector3(0, 0, -far))
+	var idle_start := idle.global_position
+	_run(idle, 1.0)
+	assert_lt(idle.global_position.distance_to(idle_start), 8.5, "non-marching bots just wander near home")

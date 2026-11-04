@@ -47,6 +47,8 @@ var _fire_cooldown := 0.0
 var _wander_pause := 0.0
 var _rng := RandomNumberGenerator.new()
 var _strafe_side := 1.0
+## Came in through an entrance (BotSpawner): advances on the target instead of wandering.
+var marching := false
 var _strafe_left := 0.0
 var _built := false
 var _head_shape: BoxShape3D
@@ -108,6 +110,8 @@ func _physics_process(delta: float) -> void:
 			if sees:
 				_reaction_left = stats["reaction_time_s"]
 				state = State.CHASE
+			elif marching and target and is_instance_valid(target):
+				_move_toward(target.global_position, delta)   # entrance bots press in
 			else:
 				_wander(delta)
 		State.CHASE:

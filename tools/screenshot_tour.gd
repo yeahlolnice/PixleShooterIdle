@@ -8,7 +8,8 @@ extends Node
 ##   godot --path . res://tools/screenshot_tour.tscn -- --out=/tmp/shots
 ##
 ## Needs a real display (headless renders nothing). On Linux CI use xvfb-run.
-## The window shows for ~15 s; the mouse is left free.
+## The window shows for ~40 s without taking focus (WINDOW_FLAG_NO_FOCUS), so real
+## clicks on the desktop do not reach the game; the mouse is left free.
 
 const MAIN_SCENE := "res://scenes/main.tscn"
 const DEFAULT_OUT := "res://build/screens"
@@ -20,6 +21,8 @@ var _shot := 0
 
 
 func _ready() -> void:
+	# Never take focus: the tour runs on a real desktop and must not catch the user's clicks.
+	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_NO_FOCUS, true)
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--out="):
 			_out = arg.trim_prefix("--out=")
@@ -35,6 +38,10 @@ func _run() -> void:
 	await get_tree().process_frame
 	await _settle()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE   # never grab the user's mouse
+	# Ignore real input entirely: the shots are scripted.
+	_main.player.set_process_input(false)
+	_main.player.set_process_unhandled_input(false)
+	(_main.player.get_node("WeaponManager") as Node).set_physics_process(false)
 	await _snap("freeze_time")
 
 	var buy := _ui(BuyMenu) as BuyMenu
@@ -46,10 +53,18 @@ func _run() -> void:
 		wm.equip(id)
 		await _snap("gun_" + id)
 	wm.equip("sniper_longboi")
-	Input.action_press("aim")   # held like a player would; the manager reads it each tick
+	wm.set_aiming(true)
 	await _snap("sniper_scoped")
-	Input.action_release("aim")
+	wm.set_aiming(false)
 	wm.equip("rifle_block47")
+
+	# Warehouse live, no cheats yet: bots should stream in from the entrances in columns.
+	_main.rounds.advance(_main.rounds.time_left + 0.05)
+	_main.player.rotation = Vector3.ZERO
+	_main.player.aim_at(_main.player.camera.global_position + Vector3(0, -0.15, -10), 1.0)
+	await _settle(200)
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	await _snap("columns_live")
 
 	var last_arena: String = DataRegistry.arenas()[-1]["id"]
 	if ArenaService.select(last_arena):

@@ -48,6 +48,7 @@ func _ready() -> void:
 	spawner.target = player
 	add_child(spawner)
 	rounds.spawn_wave_requested.connect(_spawn_wave)
+	rounds.spawn_bots_requested.connect(func(n): spawner.spawn_more(rounds.arena_id, n))
 	rounds.clear_bots_requested.connect(_clear_bots)
 	var loot := LootDropper.new()
 	loot.name = "LootDropper"

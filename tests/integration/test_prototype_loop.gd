@@ -20,6 +20,7 @@ func _go_live() -> void:
 func test_kill_pays_expected_cash_then_death_resets_gun() -> void:
 	_go_live()
 	var spawner: BotSpawner = main.spawner
+	spawner.flush_queue()   # entrance bots walk in over time; let them all in now
 	assert_gt(spawner.get_child_count(), 0, "live round spawned bots")
 	var player: Player = main.player
 	var wm: WeaponManager = player.get_node("WeaponManager")

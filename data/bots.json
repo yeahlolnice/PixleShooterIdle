@@ -5,7 +5,7 @@
       "name": "Grunt",
       "behaviour": "grunt",
       "health": 50,
-      "move_speed": 2.5,
+      "move_speed": 3.2,
       "reaction_time_s": 1.0,
       "aim_error_deg": 14,
       "fire_rate": 0.7,

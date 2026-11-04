@@ -105,12 +105,21 @@ func test_spawner_count_from_data_plus_extra_slots() -> void:
 	var spawner := BotSpawner.new()
 	spawner.target = stub
 	add_child_autofree(spawner)
-	var bots := spawner.spawn_wave("arena_1", 2)
-	assert_eq(bots.size(), arena["bots_per_wave"] + 2)
-	assert_eq(spawner.alive_count(), bots.size())
-	var spawns: Array = arena["bot_spawns"]
-	for i in bots.size():
-		assert_eq(bots[i]._home, spawns[i % spawns.size()], "home is spawn point")
+	var now := spawner.spawn_wave("arena_1", 2)
+	var count: int = arena["bots_per_wave"] + 2
+	assert_eq(now.size() + spawner.pending_count(), count, "whole wave spawned or queued")
+	# Arena 1 has entrances: grunts queue there and walk in one per entrance per gap.
+	var entrances: Array = arena["entrances"]
+	spawner.tick(0.0)
+	assert_eq(spawner.alive_count(), mini(entrances.size(), count), "one per entrance at a time")
+	spawner.tick(float(arena["column_gap_s"]) + 0.01)
+	assert_eq(spawner.alive_count(), mini(entrances.size() * 2, count), "next ones after the gap")
+	var bots: Array = spawner.get_children().filter(func(c): return c is Bot)
+	bots.append_array(spawner.flush_queue())
+	assert_eq(spawner.alive_count(), count)
+	for b in bots:
+		assert_true(entrances.has(b._home), "entered at an entrance")
+		assert_true(b.marching, "marches on the player")
 	watch_signals(spawner)
 	for b in bots:
 		b.take_hit("body", 9999.0)

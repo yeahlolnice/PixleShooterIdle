@@ -124,8 +124,10 @@ const _ARENA := {
 		"blocks": {"type": "array", "items": _BLOCK, "min_items": 1},
 		"player_spawns": {"type": "array", "items": {"type": "vec3"}, "min_items": 1},
 		"bot_spawns": {"type": "array", "items": {"type": "vec3"}, "min_items": 1},
+		"entrances": {"type": "array", "items": {"type": "vec3"}, "min_items": 1},
+		"column_gap_s": _NUM_POS,
 	},
-	"optional": ["unlock_kills"],
+	"optional": ["unlock_kills", "entrances", "column_gap_s"],
 }
 
 const _CHAT_TRIGGER := {
@@ -206,7 +208,9 @@ const FILES := {
 					"freeze_time_s": _NUM_NONNEG,
 					"live_time_s": _NUM_POS,
 					"summary_time_s": _NUM_NONNEG,
+					"respawn_delay_s": _NUM_NONNEG,
 				},
+				"optional": ["respawn_delay_s"],
 			},
 			"mod_menu_time_scale": {"type": "number", "exclusive_min": 0, "max": 1},
 			"legit_mode": {
