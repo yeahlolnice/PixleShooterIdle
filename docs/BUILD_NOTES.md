@@ -24,6 +24,33 @@ under 2 minutes.
 - ...
 -->
 
+## Build 2026-11-04 — Fun pack (owner: "super grindy and not very fun") — D61–D66
+
+**What changed**
+- **Pacing:** cheat kill gates cut 3–15× (Wallhack 400 → 120, Aimbot 15,000 → 1,000), cheaper early
+  levels, +10% kill cash per cheat switched on, Grunts have half the health.
+- **No more hunting the last bot:** every kill is replaced 0.8 s later.
+- **Bots come in columns** from two entrances down open lanes (Warehouse crates moved), so you can line them up.
+- **Collateral:** bullets pass through up to 2 more bots (sniper 4); one bullet killing 2+ pays a COLLATERAL bonus.
+- **Multi-kills:** kills within 2 s chain to DOUBLE / TRIPLE / MULTI KILL / RAMPAGE, up to ×3 cash.
+- **Free trial:** in your first round the seller lends you Aimbot + Wallhack for 30 s.
+- **One shop, open any time:** B (guns & servers) and INSERT (cheats) are two tabs; the world slows
+  while you shop. Buy time is now a 3 s "GET READY".
+- **Sentry.exe:** Sentries tab: deploy up to 8 turrets around the map, upgrade damage and fire rate.
+  Sentry kills pay 50% and don't feed your streak, so playing yourself still pays more.
+
+**Test it (play normally, no DEV button, fresh-ish save)**
+1. First round: feel the free trial, then notice when it ends. Was that a "I want that back" moment?
+2. Stand at spawn: bots stream in from the two north lanes. Try for a collateral down a column.
+3. Chain kills fast for DOUBLE / TRIPLE KILL. Press B mid-fight to buy a gun.
+4. At 15 kills, INSERT → Sentries → Deploy. Let the sentries work for a bit.
+5. Time yourself to Wallhack (target ≈ 15 min).
+
+**Feedback we need**
+- Is it fun now? Where does it still drag?
+- Too easy / too generous anywhere (trial length, multi-kill ×3, sentry 50%)?
+- Do sentries feel like idle progress, or like they steal your kills?
+
 ## Build 2026-11-03 — Phase 3 Vertical slice (TASK-022..031) — GATE 3: "Are friends hooked?"
 
 **What changed**
