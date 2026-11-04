@@ -83,7 +83,7 @@ func _refresh_cash() -> void:
 func _refresh_timer() -> void:
 	var secs := ceili(_time_left)
 	if _state == EventBus.ROUND_FREEZE:
-		freeze_label.text = "BUY TIME  %d" % secs
+		freeze_label.text = "GET READY  %d" % secs
 		timer_label.text = "Round %d" % _round
 	else:
 		timer_label.text = "Round %d  %d:%02d" % [_round, secs / 60, secs % 60]

@@ -63,7 +63,7 @@ func test_shipped_tutorial_covers_controls_buy_and_mod_menu() -> void:
 	for t in DataRegistry.chat()["triggers"]:
 		if t["event"] in ["first_match", "round_live", "first_cash"] and t["once"]:
 			tutorial += " ".join(t["lines"]) + "\n"
-	for needle in ["WASD", "SPACE", "LEFT CLICK", "B to open the buy menu", "INSERT"]:
+	for needle in ["WASD", "SPACE", "LEFT CLICK", "Press B any time", "INSERT"]:
 		assert_string_contains(tutorial, needle)
 
 

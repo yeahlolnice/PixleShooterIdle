@@ -9,7 +9,7 @@
     "per_cheat_bonus": 0.1
   },
   "round": {
-    "freeze_time_s": 8,
+    "freeze_time_s": 3,
     "live_time_s": 120,
     "summary_time_s": 5,
     "respawn_delay_s": 0.8

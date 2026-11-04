@@ -1,7 +1,7 @@
 class_name BuyMenu
 extends Control
-## Counter-Strike-style buy menu. Opens with the buy_menu action (B) during
-## freeze time only and closes when the round goes live. Purchase rules live in
+## Counter-Strike-style buy menu, now one tab of the shop (D65). Opens with the
+## buy_menu action (B) at any time, slowing the world like the mod menu. Purchase rules live in
 ## ShopService; this only draws one row per gun category (guns.json "category",
 ## in CATEGORY_ORDER) and equips through WeaponManager. Number keys 1-9 buy in
 ## on-screen order. Locked guns show the kills they need.
@@ -13,7 +13,10 @@ const CATEGORY_NAMES := {"pistol": "PISTOLS", "smg": "SMGS", "shotgun": "SHOTGUN
 ## Set by Main; the menu equips the bought gun here.
 var weapon_manager: WeaponManager
 
+const SHOP_TAB := "guns"
+
 var _freeze := false
+var _saved_time_scale := 1.0
 var _rows: VBoxContainer
 var _cash_label: Label
 var _feedback: Label
@@ -25,6 +28,7 @@ var _arena_buttons: Dictionary = {}  # arena_id -> Button
 
 func _ready() -> void:
 	visible = false
+	add_to_group(ShopTabs.GROUP)
 	var dim := ColorRect.new()
 	dim.color = Color(0, 0, 0, 0.55)
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -35,11 +39,12 @@ func _ready() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 10)
 	center.add_child(box)
+	box.add_child(ShopTabs.make(SHOP_TAB))
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 24)
 	box.add_child(head)
 	var title := Label.new()
-	title.text = "BUY MENU  (B to close)"
+	title.text = "GUNS & SERVERS  (B to close)"
 	title.add_theme_font_size_override("font_size", 26)
 	head.add_child(title)
 	_cash_label = Label.new()
@@ -178,10 +183,14 @@ func is_open() -> bool:
 	return visible
 
 
+## Opens any time (D65). Mid-round the world slows to mod_menu_time_scale, as in the mod menu.
 func open_menu() -> void:
-	if not _freeze or visible:
+	if visible:
 		return
+	ShopTabs.close_others(self)
 	visible = true
+	_saved_time_scale = Engine.time_scale
+	Engine.time_scale = float(DataRegistry.economy().get("mod_menu_time_scale", 1.0))
 	_feedback.text = ""
 	_refresh()
 	EventBus.menu_toggled.emit(&"buy_menu", true)
@@ -191,13 +200,17 @@ func close_menu() -> void:
 	if not visible:
 		return
 	visible = false
+	Engine.time_scale = _saved_time_scale
 	EventBus.menu_toggled.emit(&"buy_menu", false)
+
+
+func _exit_tree() -> void:
+	if visible:
+		Engine.time_scale = _saved_time_scale
 
 
 func _on_round_state(state: StringName, _info: Dictionary) -> void:
 	_freeze = state == EventBus.ROUND_FREEZE
-	if not _freeze:
-		close_menu()
 
 
 func _unhandled_input(event: InputEvent) -> void:

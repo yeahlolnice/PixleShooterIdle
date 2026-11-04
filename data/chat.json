@@ -19,7 +19,7 @@
     {"id": "tut_welcome", "event": "first_match", "channel": "system", "once": true, "delay_s": 0.5,
      "lines": ["Welcome to the server. WASD to move, SPACE to jump, mouse to look around."]},
     {"id": "tut_buy_menu", "event": "first_match", "channel": "system", "once": true, "delay_s": 3.0,
-     "lines": ["Freeze time! Press B to open the buy menu. Better guns cost cash, and you lose them when you die."]},
+     "lines": ["Press B any time for guns, INSERT for cheats. The game slows down while you shop. Guns you buy are lost when you die."]},
     {"id": "tut_shoot", "event": "round_live", "channel": "system", "once": true, "delay_s": 0.0,
      "lines": ["Round is live. LEFT CLICK to shoot, R to reload. Kills pay cash, headshots pay more."]},
     {"id": "tut_chat_log", "event": "round_live", "channel": "system", "once": true, "delay_s": 6.0,

@@ -96,7 +96,7 @@ func test_unlock_buy_effect_save_reload() -> void:
 	# Tutorial chat has played once; flush queued lines.
 	ChatSystem.tick(60.0)
 	assert_eq(_count_lines("Welcome to the server"), 1, "welcome line posted once")
-	assert_eq(_count_lines("Press B to open the buy menu"), 1, "buy-menu hint posted once")
+	assert_eq(_count_lines("Press B any time for guns"), 1, "buy-menu hint posted once")
 	assert_true(GameState.chat_flags.get("event:first_match", false))
 
 	# Save, wipe, reload.
@@ -120,7 +120,7 @@ func test_unlock_buy_effect_save_reload() -> void:
 	await wait_physics_frames(3)
 	ChatSystem.tick(60.0)
 	assert_eq(_count_lines("Welcome to the server"), 1, "welcome not repeated after reload")
-	assert_eq(_count_lines("Press B to open the buy menu"), 1, "buy-menu hint not repeated")
+	assert_eq(_count_lines("Press B any time for guns"), 1, "buy-menu hint not repeated")
 	assert_eq(_count_lines("Round is live. LEFT CLICK"), 0, "live hint never fired (no live round yet)")
 	assert_eq(ChatSystem.history.size(), lines_before, "no new chat lines on a reloaded save")
 	assert_almost_eq(main.player.effective(&"move_speed"), boosted, 0.0001, "new player gets the cheat")

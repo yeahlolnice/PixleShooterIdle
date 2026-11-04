@@ -13,6 +13,7 @@ extends Control
 ## Tests can call build(tabs, entries) with CheatBase entries from a fixture.
 
 const MENU_ID := &"mod_menu"
+const SHOP_TAB := "cheats"
 const PANEL_SIZE := Vector2(720, 460)
 ## Cosmetic length of the fake injector bar (real seconds, ignores time scale).
 const INJECT_SECONDS := 1.2
@@ -30,6 +31,7 @@ var _saved_time_scale := 1.0
 
 func _ready() -> void:
 	visible = false
+	add_to_group(ShopTabs.GROUP)
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	theme = HaxTheme.build()
@@ -69,6 +71,7 @@ func _build_shell() -> void:
 	box.add_theme_constant_override("separation", 8)
 	panel.add_child(box)
 
+	box.add_child(ShopTabs.make(SHOP_TAB))
 	var header := HBoxContainer.new()
 	box.add_child(header)
 	var title := Label.new()
@@ -185,6 +188,7 @@ func is_open() -> bool:
 func open_menu() -> void:
 	if visible:
 		return
+	ShopTabs.close_others(self)
 	visible = true
 	_saved_time_scale = Engine.time_scale
 	Engine.time_scale = float(DataRegistry.economy().get("mod_menu_time_scale", 1.0))
