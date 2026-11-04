@@ -109,7 +109,7 @@ func test_cost_follows_base_times_growth_pow_level() -> void:
 	for def in DataRegistry.cheats() + DataRegistry.cheat_upgrades():
 		var cheat := CheatSystem.get_cheat(def["id"])
 		for lvl in [0, 1, 2, 5, cheat.max_level - 1]:
-			var expected := float(def["base_cost"]) * pow(growth, lvl)
+			var expected := float(def["base_cost"]) * pow(float(def.get("cost_growth", growth)), lvl)
 			assert_almost_eq(cheat.cost(lvl), expected, expected * 1e-9, "%s cost(%d)" % [cheat.id, lvl])
 
 

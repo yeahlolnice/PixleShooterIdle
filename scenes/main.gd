@@ -17,6 +17,7 @@ extends Node3D
 var tracker: MatchTracker
 var rounds: RoundController
 var spawner: BotSpawner
+var sentries: SentryManager
 
 
 func _enter_tree() -> void:
@@ -33,6 +34,9 @@ func _ready() -> void:
 	if not DataRegistry.is_valid():
 		push_error("[Main] data errors, see log above; the game may misbehave")
 	var id := arena_id if arena_id != "" else ArenaService.selected_id()
+	sentries = SentryManager.new()
+	sentries.name = "Sentries"
+	add_child(sentries)
 	_build_arena(id)
 
 	tracker = MatchTracker.new()
@@ -84,6 +88,8 @@ func _build_arena(id: String) -> void:
 		player.global_position = arena.player_spawns[0]
 		player.velocity = Vector3.ZERO
 	print("[Main] arena '%s' built: %d blocks, %d bot spawns, %d navmesh polygons" % [id, arena.block_count(), arena.bot_spawns.size(), arena.nav_polygon_count()])
+	if sentries:
+		sentries.rebuild(id)
 	EventBus.player_spawned.emit(player)
 
 

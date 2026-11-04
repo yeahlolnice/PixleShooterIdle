@@ -127,8 +127,9 @@ const _ARENA := {
 		"bot_spawns": {"type": "array", "items": {"type": "vec3"}, "min_items": 1},
 		"entrances": {"type": "array", "items": {"type": "vec3"}, "min_items": 1},
 		"column_gap_s": _NUM_POS,
+		"sentry_spots": {"type": "array", "items": {"type": "vec3"}, "min_items": 1},
 	},
-	"optional": ["unlock_kills", "entrances", "column_gap_s"],
+	"optional": ["unlock_kills", "entrances", "column_gap_s", "sentry_spots"],
 }
 
 const _CHAT_TRIGGER := {
@@ -224,6 +225,10 @@ const FILES := {
 			"collateral": {
 				"type": "object",
 				"fields": {"pierce": {"type": "int", "min": 0}, "damage_falloff": _NUM_NONNEG, "bonus_cash_mult": _NUM_NONNEG},
+			},
+			"sentries": {
+				"type": "object",
+				"fields": {"damage": _NUM_POS, "fire_rate": _NUM_POS, "range_m": _NUM_POS, "turn_speed_deg_s": _NUM_POS, "cash_mult": _NUM_NONNEG},
 			},
 			"free_trial": {
 				"type": "object",

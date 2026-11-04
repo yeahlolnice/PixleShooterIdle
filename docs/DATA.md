@@ -30,6 +30,7 @@ section here. Files without a schema still load (raw, via `DataRegistry.get_file
 | `collateral.pierce` / `damage_falloff` / `bonus_cash_mult` | int / 0–1 / ≥ 0 | extra bots one bullet passes through (guns may override with `pierce`), damage kept per bot passed, and bonus cash per bot when one bullet kills 2+ ("COLLATERAL xN") |
 | `multi_kill.window_s` / `step` / `cap` | s / ≥ 0 / ≥ 1 | kills within `window_s` of the last chain; kill cash × (1 + (chain − 1) × step), capped. Player kills only |
 | `free_trial.round` / `seconds` / `cheats` | int / s / {cheat_id: level} | once per save, when that round goes live, these cheats run at these levels for `seconds` without being owned (D64) |
+| `sentries.damage` / `fire_rate` / `range_m` / `turn_speed_deg_s` / `cash_mult` | per shot / shots·s⁻¹ / m / °·s⁻¹ / 0–1 | Sentry.exe base stats; kills pay `cash_mult` × a no-streak kill (D66) |
 | `loot.drop_chance` | 0–1 | chance a kill drops a bonus-cash pickup (`shooter/loot/`) |
 | `loot.cash_mult` | number ≥ 0 | pickup value = this × that kill's cash (paid on top of the kill reward) |
 | `loot.lifetime_s` / `pickup_radius_m` | s / m | pickup vanishes after / is collected within this distance of the player |
@@ -96,6 +97,7 @@ the arena move_speed mult) and `strafe_switch_s` (rusher flips direction about t
 | `order` | int ≥ 1 | progression order (`DataRegistry.arenas()` is sorted by it) |
 | `cash_mult` | number > 0 | `global_mult` factor for kills here (plan: ×10 per arena) |
 | `entrances` / `column_gap_s` | optional vec3[] / seconds | non-sniper bots enter here in single file, one per entrance every `column_gap_s` (default 0.6), then march on the player (D62) |
+| `sentry_spots` | optional vec3[] | where Sentry.exe turrets deploy, in order (one per Deploy level) |
 | `unlock_kills` | optional int ≥ 0 | lifetime kills to unlock (default 0); unlocked arenas stay unlocked through bans. Picked in the buy menu's SERVER row during freeze time (ArenaService, `GameState.current_arena_id`) |
 | `bots_per_wave` | int ≥ 1 | base wave size (+ `GameState.server_slots`) |
 | `bot_types` | array of bot ids | which bots spawn here |

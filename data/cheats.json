@@ -1,6 +1,6 @@
 {
   "cost_growth": 1.15,
-  "tabs": ["Movement", "Visuals", "Combat", "Rage"],
+  "tabs": ["Movement", "Visuals", "Combat", "Rage", "Sentries"],
   "cheats": [
     {
       "id": "speed_hack",
@@ -181,6 +181,46 @@
       "resets_on_prestige": true,
       "effects": [
         {"key": "extra_bots", "target": "game", "type": "number", "from": 1, "to": 10, "curve": "linear"}
+      ]
+    },
+    {
+      "id": "sentry_count",
+      "name": "Sentry.exe: Deploy",
+      "tab": "Sentries",
+      "order": 14,
+      "unlock": {"kills": 15},
+      "base_cost": 250,
+      "cost_growth": 1.6,
+      "max_level": 8,
+      "resets_on_prestige": true,
+      "effects": [
+        {"key": "count", "target": "game", "type": "number", "from": 1, "to": 8, "curve": "linear"}
+      ]
+    },
+    {
+      "id": "sentry_damage",
+      "name": "Sentry.exe: Damage",
+      "tab": "Sentries",
+      "order": 15,
+      "unlock": {"kills": 30},
+      "base_cost": 400,
+      "max_level": 10,
+      "resets_on_prestige": true,
+      "effects": [
+        {"key": "damage_mult", "target": "game", "type": "number", "from": 1.3, "to": 5.0, "curve": "exp"}
+      ]
+    },
+    {
+      "id": "sentry_rate",
+      "name": "Sentry.exe: Fire Rate",
+      "tab": "Sentries",
+      "order": 16,
+      "unlock": {"kills": 30},
+      "base_cost": 400,
+      "max_level": 10,
+      "resets_on_prestige": true,
+      "effects": [
+        {"key": "fire_rate_mult", "target": "game", "type": "number", "from": 1.2, "to": 3.0, "curve": "linear"}
       ]
     }
   ]

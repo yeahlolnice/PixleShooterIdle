@@ -168,6 +168,8 @@ static func feed_text(cash: float, info: Dictionary) -> String:
 		text += "  HEADSHOT"
 	if gun != "":
 		text += "  [%s]" % gun
+	elif String(info.get("gun_id", "")) == Sentry.GUN_ID:
+		text += "  [SENTRY]"
 	return text
 
 

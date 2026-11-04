@@ -7,6 +7,9 @@ extends Node
 ## Wire-up: add as a node; it listens to EventBus.bot_killed / player_died itself.
 ## Tests call record_kill / record_death directly.
 
+## gun_id that Sentry.exe turrets report on their kills (D66).
+const SENTRY_GUN_ID := "sentry"
+
 ## Arena whose cash_mult applies; set by Main / RoundController.
 var arena_id := ""
 var streak := 0
@@ -113,6 +116,9 @@ func record_death() -> void:
 
 
 func _on_bot_killed(_bot: Node, info: Dictionary) -> void:
+	if String(info.get("gun_id", "")) == SENTRY_GUN_ID:
+		EventBus.kill_rewarded.emit(record_sentry_kill(String(info.get("bot_type", ""))), info)
+		return
 	var mult := advance_chain()
 	var cash := record_kill(bool(info.get("headshot", false)), String(info.get("bot_type", "")), mult)
 	EventBus.kill_rewarded.emit(cash, info)
@@ -127,6 +133,21 @@ func advance_chain() -> float:
 	chain = chain + 1 if _clock - _last_kill_at <= float(rules.get("window_s", 0.0)) else 1
 	_last_kill_at = _clock
 	return minf(1.0 + (chain - 1) * float(rules.get("step", 0.0)), float(rules.get("cap", 1.0)))
+
+
+## A sentry kill (D66): counts as a kill (unlocks, totals) but pays
+## sentries.cash_mult of a plain no-streak kill and never touches the streak
+## or the multi-kill chain, so playing yourself always pays more.
+func record_sentry_kill(bot_type := "") -> float:
+	var saved := streak
+	streak = 0
+	var cash := kill_value(false, bot_type) * float(DataRegistry.economy().get("sentries", {}).get("cash_mult", 0.0))
+	streak = saved
+	GameState.add_cash(cash)
+	GameState.add_kill()
+	kills += 1
+	cash_earned += cash
+	return cash
 
 
 ## One bullet killed `count` bots: pays collateral.bonus_cash_mult x a plain kill per bot.

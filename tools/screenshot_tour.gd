@@ -106,7 +106,9 @@ func _run() -> void:
 	for cheat in CheatSystem.cheats():
 		for i in 3:
 			CheatSystem.purchase(cheat.id)
-	CheatSystem.purchase(CheatSystem.SERVER_SLOTS_ID)
+	for up in CheatSystem.upgrades():
+		for i in 4:
+			CheatSystem.purchase(up.id)
 	mod.refresh()
 	await _snap("mod_menu_all_bought")
 	mod.close_menu()

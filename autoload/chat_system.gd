@@ -267,7 +267,10 @@ func _context(payload: Dictionary) -> Dictionary:
 
 
 func _cheat_name(cheat_id: String) -> String:
-	return str(DataRegistry.cheat(cheat_id).get("name", cheat_id.capitalize()))
+	var def := DataRegistry.cheat(cheat_id)
+	if def.is_empty():
+		def = DataRegistry.cheat_upgrade(cheat_id)   # Server Slots, Sentry.exe upgrades
+	return str(def.get("name", cheat_id.capitalize()))
 
 
 ## trigger.sender > payload.bot_name > channel sender > random bot name.
