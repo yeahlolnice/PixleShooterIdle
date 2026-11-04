@@ -196,7 +196,9 @@ const FILES := {
 					"headshot_mult": _NUM_POS,
 					"streak_step": _NUM_NONNEG,
 					"streak_cap": _NUM_NONNEG,
+					"per_cheat_bonus": _NUM_NONNEG,
 				},
+				"optional": ["per_cheat_bonus"],
 			},
 			"round": {
 				"type": "object",

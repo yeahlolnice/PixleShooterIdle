@@ -5,7 +5,8 @@
     "base_cash": 10,
     "headshot_mult": 1.5,
     "streak_step": 0.1,
-    "streak_cap": 1.0
+    "streak_cap": 2.0,
+    "per_cheat_bonus": 0.1
   },
   "round": {
     "freeze_time_s": 8,

@@ -56,7 +56,7 @@
       "name": "Rooftop",
       "order": 2,
       "cash_mult": 10,
-      "unlock_kills": 500,
+      "unlock_kills": 300,
       "bots_per_wave": 7,
       "bot_types": ["sniper", "grunt", "rusher"],
       "bot_mults": {

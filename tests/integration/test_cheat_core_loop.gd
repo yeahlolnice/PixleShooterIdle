@@ -63,17 +63,18 @@ func test_unlock_buy_effect_save_reload() -> void:
 	var base_speed := player.effective(&"move_speed")
 	var sh_cost := CheatSystem.next_cost("speed_hack")
 
-	# Locked until 10 kills, even with cash.
+	# Locked until its unlock kill count (from data), even with cash.
+	var need: int = CheatSystem.get_cheat("speed_hack").unlock_kills
 	GameState.add_cash(sh_cost)
-	_kill(9)
+	_kill(need - 1)
 	GameState.cash = maxf(GameState.cash, sh_cost)
-	assert_false(CheatSystem.is_unlocked("speed_hack"), "locked at 9 kills")
+	assert_false(CheatSystem.is_unlocked("speed_hack"), "locked one kill short")
 	assert_false(CheatSystem.purchase("speed_hack"))
 	_kill(1)
-	assert_eq(GameState.lifetime_kills, 10)
-	assert_true(CheatSystem.is_unlocked("speed_hack"), "unlocked at 10 kills")
+	assert_eq(GameState.lifetime_kills, need)
+	assert_true(CheatSystem.is_unlocked("speed_hack"), "unlocked at the data threshold")
 
-	# Buy (earned cash from 10 kills is already enough; top up to be deterministic).
+	# Buy (earned cash from those kills is already enough; top up to be deterministic).
 	GameState.cash = maxf(GameState.cash, sh_cost)
 	var cash_before := GameState.cash
 	assert_true(CheatSystem.purchase("speed_hack"))
@@ -106,7 +107,7 @@ func test_unlock_buy_effect_save_reload() -> void:
 	EventBus.game_state_loaded.emit()
 	assert_eq(CheatSystem.level("speed_hack"), 1, "still owned")
 	assert_true(CheatSystem.is_enabled("speed_hack"), "still enabled")
-	assert_eq(GameState.lifetime_kills, 10)
+	assert_eq(GameState.lifetime_kills, need)
 	assert_almost_eq(GameState.cash, cash_saved, 0.001)
 	assert_almost_eq(player.effective(&"move_speed"), boosted, 0.0001, "effect re-applied after load")
 

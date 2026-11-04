@@ -64,11 +64,21 @@ func kill_value(headshot: bool, bot_type := "") -> float:
 	var rules: Dictionary = DataRegistry.economy()["kill_reward"]
 	var mults := rules.duplicate()
 	var arena := DataRegistry.arena(arena_id) if arena_id != "" else {}
-	mults["global_mult"] = float(arena.get("cash_mult", 1.0))
+	mults["global_mult"] = float(arena.get("cash_mult", 1.0)) * cheat_bonus_mult()
 	var base := float(rules["base_cash"])
 	if bot_type != "":
 		base *= float(DataRegistry.bot(bot_type).get("cash_mult", 1.0))
 	return Economy.cash_per_kill(base, headshot, streak, mults)
+
+
+## 1 + per_cheat_bonus x (cheats switched on): running more cheats pays more.
+static func cheat_bonus_mult() -> float:
+	var per := float(DataRegistry.economy()["kill_reward"].get("per_cheat_bonus", 0.0))
+	var on := 0
+	for cheat in CheatSystem.cheats():
+		if CheatSystem.is_enabled(cheat.id):
+			on += 1
+	return 1.0 + per * on
 
 
 ## Credits cash and kill counters, then extends the streak. Returns cash paid.

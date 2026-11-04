@@ -4,7 +4,7 @@
       "id": "grunt",
       "name": "Grunt",
       "behaviour": "grunt",
-      "health": 100,
+      "health": 50,
       "move_speed": 2.5,
       "reaction_time_s": 1.0,
       "aim_error_deg": 14,

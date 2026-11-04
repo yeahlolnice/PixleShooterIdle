@@ -26,9 +26,9 @@ func _cheat(id: String) -> CheatBase:
 	return CheatSystem.get_cheat(id)
 
 
-func _spawn_bot(pos: Vector3) -> Bot:
+func _spawn_bot(pos: Vector3, bot_type := "grunt") -> Bot:
 	var bot: Bot = BotScene.instantiate()
-	bot.configure("grunt", DataRegistry.first_arena_id())
+	bot.configure(bot_type, DataRegistry.first_arena_id())
 	_world.add_child(bot)
 	bot.global_position = pos
 	bot.set_physics_process(false)
@@ -134,7 +134,7 @@ func test_triggerbot_holds_fire_off_target() -> void:
 # --- Spinbot -----------------------------------------------------------------------
 
 func test_spinbot_whips_around_and_fires_on_interval() -> void:
-	var bot := _spawn_bot(Vector3(1, 0, 7))  # behind the player
+	var bot := _spawn_bot(Vector3(1, 0, 7), "rusher")  # behind the player; survives one headshot
 	await wait_physics_frames(2)
 	var c := _cheat("spinbot") as Spinbot
 	c.apply(_player, 1)

@@ -8,8 +8,8 @@
       "name": "Speed Hack",
       "tab": "Movement",
       "order": 1,
-      "unlock": {"kills": 10},
-      "base_cost": 100,
+      "unlock": {"kills": 5},
+      "base_cost": 50,
       "max_level": 15,
       "effects": [
         {"key": "move_speed_mult", "target": "player", "type": "number", "from": 1.1, "to": 2.5, "curve": "linear"}
@@ -21,8 +21,8 @@
       "name": "Infinite Ammo",
       "tab": "Combat",
       "order": 2,
-      "unlock": {"kills": 50},
-      "base_cost": 500,
+      "unlock": {"kills": 15},
+      "base_cost": 200,
       "max_level": 10,
       "effects": [
         {"key": "mag_mult", "target": "weapon", "type": "number", "from": 2.0, "to": 10.0, "curve": "exp"},
@@ -35,8 +35,8 @@
       "name": "Auto Bhop",
       "tab": "Movement",
       "order": 3,
-      "unlock": {"kills": 150},
-      "base_cost": 1500,
+      "unlock": {"kills": 40},
+      "base_cost": 600,
       "max_level": 10,
       "effects": [
         {"key": "max_hop_speed_mult", "target": "cheat", "type": "number", "from": 6.2, "to": 7.5, "curve": "linear"},
@@ -48,8 +48,8 @@
       "name": "Wallhack",
       "tab": "Visuals",
       "order": 4,
-      "unlock": {"kills": 400},
-      "base_cost": 4000,
+      "unlock": {"kills": 120},
+      "base_cost": 1500,
       "max_level": 10,
       "script": "res://cheats/wallhack.gd",
       "effects": [
@@ -63,8 +63,8 @@
       "name": "No Recoil",
       "tab": "Combat",
       "order": 5,
-      "unlock": {"kills": 1000},
-      "base_cost": 10000,
+      "unlock": {"kills": 200},
+      "base_cost": 4000,
       "max_level": 10,
       "effects": [
         {"key": "recoil_mult", "target": "weapon", "type": "number", "from": 0.5, "to": 0.0, "curve": "linear"},
@@ -77,8 +77,8 @@
       "name": "Triggerbot",
       "tab": "Combat",
       "order": 6,
-      "unlock": {"kills": 2500},
-      "base_cost": 25000,
+      "unlock": {"kills": 350},
+      "base_cost": 10000,
       "max_level": 10,
       "effects": [
         {"key": "delay_s", "target": "cheat", "type": "number", "from": 0.3, "to": 0.0, "curve": "linear"}
@@ -90,8 +90,8 @@
       "name": "Hitbox Expander",
       "tab": "Combat",
       "order": 7,
-      "unlock": {"kills": 6000},
-      "base_cost": 60000,
+      "unlock": {"kills": 600},
+      "base_cost": 25000,
       "max_level": 10,
       "effects": [
         {"key": "head_scale", "target": "cheat", "type": "number", "from": 1.5, "to": 4.0, "curve": "linear"}
@@ -103,8 +103,8 @@
       "name": "Aimbot",
       "tab": "Rage",
       "order": 8,
-      "unlock": {"kills": 15000},
-      "base_cost": 150000,
+      "unlock": {"kills": 1000},
+      "base_cost": 60000,
       "max_level": 15,
       "effects": [
         {"key": "fov_deg", "target": "cheat", "type": "number", "from": 3.0, "to": 180.0, "curve": "exp"},
@@ -118,8 +118,8 @@
       "name": "Loot Magnet",
       "tab": "Visuals",
       "order": 9,
-      "unlock": {"kills": 40000},
-      "base_cost": 400000,
+      "unlock": {"kills": 1600},
+      "base_cost": 150000,
       "max_level": 10,
       "effects": [
         {"key": "radius_m", "target": "cheat", "type": "number", "from": 3.0, "to": 500.0, "curve": "exp"}
@@ -175,8 +175,8 @@
       "name": "Server Slots",
       "tab": "Rage",
       "order": 13,
-      "unlock": {"kills": 25},
-      "base_cost": 250,
+      "unlock": {"kills": 10},
+      "base_cost": 150,
       "max_level": 10,
       "resets_on_prestige": true,
       "effects": [
